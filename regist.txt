@@ -1,0 +1,323 @@
+curl ^"https://beta.magai.co/chat^" ^
+  -H ^"accept: text/x-component^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"content-type: text/plain;charset=UTF-8^" ^
+  -b ^"_ga=GA1.1.1876619409.1779282995; _fbp=fb.1.1779282996304.785424907238514349; __stripe_mid=0f365a11-bfc4-402b-a7a9-1da0f14091ea8b7e9f; __stripe_sid=f5efce31-d683-4507-9d7a-3327b95ff47e4f64d1; _ga_N5J29RVHDJ=GS2.1.s1779282994^$o1^$g1^$t1779283139^$j60^$l0^$h0^" ^
+  -H ^"next-action: 407e2e7eb950201c0032f365753bf0b860169827a5^" ^
+  -H ^"next-router-state-tree: ^%^5B^%^22^%^22^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^5B^%^22path^%^22^%^2C^%^22chat^%^22^%^2C^%^22oc^%^22^%^2Cnull^%^5D^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^22__PAGE__^%^22^%^2C^%^7B^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C16^%^5D^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/signup/epa2026^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: same-origin^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  --data-raw ^"^[^{^\^"email^\^":^\^"frank123^@outlook.com^\^",^\^"password^\^":^\^"aqa8lei^\^"^}^]^" &
+curl ^"https://beta.magai.co/chat^" ^
+  -H ^"accept: text/x-component^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"content-type: text/plain;charset=UTF-8^" ^
+  -b ^"_ga=GA1.1.1876619409.1779282995; _fbp=fb.1.1779282996304.785424907238514349; __stripe_mid=0f365a11-bfc4-402b-a7a9-1da0f14091ea8b7e9f; __stripe_sid=f5efce31-d683-4507-9d7a-3327b95ff47e4f64d1; _ga_N5J29RVHDJ=GS2.1.s1779282994^$o1^$g1^$t1779283139^$j60^$l0^$h0^" ^
+  -H ^"next-action: 40317846773f2010fd81d02ffddf31efd9865d0c2d^" ^
+  -H ^"next-router-state-tree: ^%^5B^%^22^%^22^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^5B^%^22path^%^22^%^2C^%^22chat^%^22^%^2C^%^22oc^%^22^%^2Cnull^%^5D^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^22__PAGE__^%^22^%^2C^%^7B^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C16^%^5D^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/signup/epa2026^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: same-origin^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  --data-raw ^"^[^\^"frank123^@outlook.com^\^"^]^" &
+curl ^"https://beta.magai.co/chat^" ^
+  -H ^"accept: text/x-component^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"content-type: text/plain;charset=UTF-8^" ^
+  -b ^"_ga=GA1.1.1876619409.1779282995; _fbp=fb.1.1779282996304.785424907238514349; __stripe_mid=0f365a11-bfc4-402b-a7a9-1da0f14091ea8b7e9f; __stripe_sid=f5efce31-d683-4507-9d7a-3327b95ff47e4f64d1; _ga_N5J29RVHDJ=GS2.1.s1779282994^$o1^$g1^$t1779283139^$j60^$l0^$h0^" ^
+  -H ^"next-action: 60f8e7ce01523ba5fe421581b0024317112b5932d6^" ^
+  -H ^"next-router-state-tree: ^%^5B^%^22^%^22^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^5B^%^22path^%^22^%^2C^%^22chat^%^22^%^2C^%^22oc^%^22^%^2Cnull^%^5D^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^22__PAGE__^%^22^%^2C^%^7B^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C16^%^5D^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/signup/epa2026^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: same-origin^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  --data-raw ^"^[^\^"frank123^@outlook.com^\^",^\^"aqa8lei^\^"^]^" &
+curl ^"https://bkatrpghmzbpjhegvkev.supabase.co/auth/v1/token?grant_type=password^" ^
+  -H ^"accept: */*^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"apikey: sb_publishable_abLi4B3uk35xfTdT1d5Z1g_QVGG3JNo^" ^
+  -H ^"authorization: Bearer sb_publishable_abLi4B3uk35xfTdT1d5Z1g_QVGG3JNo^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"content-type: application/json;charset=UTF-8^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: cross-site^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  -H ^"x-client-info: supabase-js-web/2.74.0^" ^
+  -H ^"x-supabase-api-version: 2024-01-01^" ^
+  --data-raw ^"^{^\^"email^\^":^\^"frank123^@outlook.com^\^",^\^"password^\^":^\^"aqa8lei^\^",^\^"gotrue_meta_security^\^":^{^}^}^" &
+curl ^"https://beta.magai.co/chat^" ^
+  -H ^"accept: text/x-component^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"content-type: text/plain;charset=UTF-8^" ^
+  -b ^"_ga=GA1.1.1876619409.1779282995; _fbp=fb.1.1779282996304.785424907238514349; __stripe_mid=0f365a11-bfc4-402b-a7a9-1da0f14091ea8b7e9f; __stripe_sid=f5efce31-d683-4507-9d7a-3327b95ff47e4f64d1; _ga_N5J29RVHDJ=GS2.1.s1779282994^$o1^$g1^$t1779283139^$j60^$l0^$h0^" ^
+  -H ^"next-action: 40cbd974183faa52e2144ec0b986569236625fd5ff^" ^
+  -H ^"next-router-state-tree: ^%^5B^%^22^%^22^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^5B^%^22path^%^22^%^2C^%^22chat^%^22^%^2C^%^22oc^%^22^%^2Cnull^%^5D^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^22__PAGE__^%^22^%^2C^%^7B^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C16^%^5D^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/signup/epa2026^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: same-origin^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  --data-raw ^"^[^\^"ff092139-9174-46b4-a8a7-768372190405^\^"^]^" &
+curl ^"https://bkatrpghmzbpjhegvkev.supabase.co/rest/v1/user?select=*^%^2Cactive_team^%^28*^%^29^%^2Cactive_workspace^%^28*^%^29^&id=eq.ff092139-9174-46b4-a8a7-768372190405^" ^
+  -H ^"accept: application/vnd.pgrst.object+json^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"accept-profile: public^" ^
+  -H ^"apikey: sb_publishable_abLi4B3uk35xfTdT1d5Z1g_QVGG3JNo^" ^
+  -H ^"authorization: Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6IjN3U09sd2IvaDN1OG0wVWQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2JrYXRycGdobXpicGpoZWd2a2V2LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJmZjA5MjEzOS05MTc0LTQ2YjQtYThhNy03NjgzNzIxOTA0MDUiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5Mjg2NzQyLCJpYXQiOjE3NzkyODMxNDIsImVtYWlsIjoiZnJhbmsxMjNAb3V0bG9vay5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJzdF9uYW1lIjoiRnJhbmsxMjMiLCJpc190cmlhbF9zaWdudXAiOnRydWUsImxhc3RfbmFtZSI6IiJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc5MjgzMTQyfV0sInNlc3Npb25faWQiOiI4OTYzMDQ3My05OWJjLTQ3ODgtODk1My0wMmM5NzMwZGVjZTMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.0GLHktA8N7RO7Z5_WG5fu7Gdzjho3BzYpKj76Iym-2Y^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: cross-site^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  -H ^"x-client-info: supabase-js-web/2.74.0^" &
+curl ^"https://bkatrpghmzbpjhegvkev.supabase.co/rest/v1/os_app_release?select=*^&order=created_at.desc^&limit=1^" ^
+  -H ^"accept: application/vnd.pgrst.object+json^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"accept-profile: public^" ^
+  -H ^"apikey: sb_publishable_abLi4B3uk35xfTdT1d5Z1g_QVGG3JNo^" ^
+  -H ^"authorization: Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6IjN3U09sd2IvaDN1OG0wVWQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2JrYXRycGdobXpicGpoZWd2a2V2LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJmZjA5MjEzOS05MTc0LTQ2YjQtYThhNy03NjgzNzIxOTA0MDUiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5Mjg2NzQyLCJpYXQiOjE3NzkyODMxNDIsImVtYWlsIjoiZnJhbmsxMjNAb3V0bG9vay5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJzdF9uYW1lIjoiRnJhbmsxMjMiLCJpc190cmlhbF9zaWdudXAiOnRydWUsImxhc3RfbmFtZSI6IiJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc5MjgzMTQyfV0sInNlc3Npb25faWQiOiI4OTYzMDQ3My05OWJjLTQ3ODgtODk1My0wMmM5NzMwZGVjZTMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.0GLHktA8N7RO7Z5_WG5fu7Gdzjho3BzYpKj76Iym-2Y^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: cross-site^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  -H ^"x-client-info: supabase-js-web/2.74.0^" &
+curl ^"https://beta.magai.co/chat^" ^
+  -H ^"accept: text/x-component^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"content-type: text/plain;charset=UTF-8^" ^
+  -b ^"_ga=GA1.1.1876619409.1779282995; _fbp=fb.1.1779282996304.785424907238514349; __stripe_mid=0f365a11-bfc4-402b-a7a9-1da0f14091ea8b7e9f; __stripe_sid=f5efce31-d683-4507-9d7a-3327b95ff47e4f64d1; _ga_N5J29RVHDJ=GS2.1.s1779282994^$o1^$g1^$t1779283139^$j60^$l0^$h0^" ^
+  -H ^"next-action: 40e849287791f7931d9039a52534f3a6572d87cc85^" ^
+  -H ^"next-router-state-tree: ^%^5B^%^22^%^22^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^5B^%^22path^%^22^%^2C^%^22chat^%^22^%^2C^%^22oc^%^22^%^2Cnull^%^5D^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^22__PAGE__^%^22^%^2C^%^7B^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C16^%^5D^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/signup/epa2026^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: same-origin^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  --data-raw ^"^[^\^"ff092139-9174-46b4-a8a7-768372190405^\^"^]^" &
+curl ^"https://beta.magai.co/chat^" ^
+  -H ^"accept: text/x-component^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"content-type: text/plain;charset=UTF-8^" ^
+  -b ^"_ga=GA1.1.1876619409.1779282995; _fbp=fb.1.1779282996304.785424907238514349; __stripe_mid=0f365a11-bfc4-402b-a7a9-1da0f14091ea8b7e9f; __stripe_sid=f5efce31-d683-4507-9d7a-3327b95ff47e4f64d1; _ga_N5J29RVHDJ=GS2.1.s1779282994^$o1^$g1^$t1779283139^$j60^$l0^$h0^" ^
+  -H ^"next-action: 40cd8b2ec4704e0f3c267bd98f93b0f9806e121b77^" ^
+  -H ^"next-router-state-tree: ^%^5B^%^22^%^22^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^5B^%^22path^%^22^%^2C^%^22chat^%^22^%^2C^%^22oc^%^22^%^2Cnull^%^5D^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^22__PAGE__^%^22^%^2C^%^7B^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C16^%^5D^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/chat^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: same-origin^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  --data-raw ^"^[^\^"ff092139-9174-46b4-a8a7-768372190405^\^"^]^" &
+curl ^"https://bkatrpghmzbpjhegvkev.supabase.co/rest/v1/team?select=*^%^2Cplan^%^28*^%^29^&id=eq.9e6125fd-d7ab-4726-a258-f898b5cce7ef^" ^
+  -H ^"accept: */*^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"accept-profile: public^" ^
+  -H ^"apikey: sb_publishable_abLi4B3uk35xfTdT1d5Z1g_QVGG3JNo^" ^
+  -H ^"authorization: Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6IjN3U09sd2IvaDN1OG0wVWQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2JrYXRycGdobXpicGpoZWd2a2V2LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJmZjA5MjEzOS05MTc0LTQ2YjQtYThhNy03NjgzNzIxOTA0MDUiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5Mjg2NzQyLCJpYXQiOjE3NzkyODMxNDIsImVtYWlsIjoiZnJhbmsxMjNAb3V0bG9vay5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJzdF9uYW1lIjoiRnJhbmsxMjMiLCJpc190cmlhbF9zaWdudXAiOnRydWUsImxhc3RfbmFtZSI6IiJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc5MjgzMTQyfV0sInNlc3Npb25faWQiOiI4OTYzMDQ3My05OWJjLTQ3ODgtODk1My0wMmM5NzMwZGVjZTMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.0GLHktA8N7RO7Z5_WG5fu7Gdzjho3BzYpKj76Iym-2Y^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: cross-site^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  -H ^"x-client-info: supabase-js-web/2.74.0^" &
+curl ^"https://beta.magai.co/api/intercom-jwt^" ^
+  -H ^"accept: */*^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyYW5kb20iOiI4OThjZjQ5ODU5ZGU5ODY2YTcwMjE5YzRhZTE0NTYxMTpiNDZjYmMwZjU4NzEwN2Y5MzFjOWEzY2YwNTdiY2FhOWE5ODhkYzc0N2Q2MTBjOWZhYzc2MDJlYzFmNzE5Yzg0YmZjMjdlMjk3NmE0YmFmMTMxMmY3MmVhMDRkMDdkNTgiLCJpYXQiOjE3NzkyODMxNDMsImV4cCI6MTc3OTI4MzQ0M30.-qL2O0uyaft8y_RQzGTSyIZq65MipH3fcl0QpIfpPBo^" ^
+  -H ^"cache-control: no-cache^" ^
+  -b ^"_ga=GA1.1.1876619409.1779282995; _fbp=fb.1.1779282996304.785424907238514349; __stripe_mid=0f365a11-bfc4-402b-a7a9-1da0f14091ea8b7e9f; __stripe_sid=f5efce31-d683-4507-9d7a-3327b95ff47e4f64d1; _ga_N5J29RVHDJ=GS2.1.s1779282994^$o1^$g1^$t1779283139^$j60^$l0^$h0^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/chat^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: same-origin^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" &
+curl ^"https://beta.magai.co/chat^" ^
+  -H ^"accept: text/x-component^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"content-type: text/plain;charset=UTF-8^" ^
+  -b ^"_ga=GA1.1.1876619409.1779282995; _fbp=fb.1.1779282996304.785424907238514349; __stripe_mid=0f365a11-bfc4-402b-a7a9-1da0f14091ea8b7e9f; __stripe_sid=f5efce31-d683-4507-9d7a-3327b95ff47e4f64d1; _ga_N5J29RVHDJ=GS2.1.s1779282994^$o1^$g1^$t1779283139^$j60^$l0^$h0^" ^
+  -H ^"next-action: 40cd8b2ec4704e0f3c267bd98f93b0f9806e121b77^" ^
+  -H ^"next-router-state-tree: ^%^5B^%^22^%^22^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^5B^%^22path^%^22^%^2C^%^22chat^%^22^%^2C^%^22oc^%^22^%^2Cnull^%^5D^%^2C^%^7B^%^22children^%^22^%^3A^%^5B^%^22__PAGE__^%^22^%^2C^%^7B^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C0^%^5D^%^7D^%^2Cnull^%^2Cnull^%^2C16^%^5D^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/chat^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: same-origin^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  --data-raw ^"^[^\^"ff092139-9174-46b4-a8a7-768372190405^\^"^]^" &
+curl ^"https://beta.magai.co/api/sync-workspace-acl^" ^
+  -X ^"POST^" ^
+  -H ^"accept: */*^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyYW5kb20iOiI1ZmE3ZWQxMTdmZmU4ZTAyMGFkZmYwYTZmMGQ1MmNkMzpjOTFiMGRiY2FjYjlkZGQ1ZjZlZmYzNzBiZTkxMzI2NTE1OGZiMWNkNmYwMWE4NWNhMDdkZWUyYjBlZTRlMjIwYjJhNzVmOWMyMjRhYmQxNDk2MTgzZTQzOWMxZWQ1ZGQiLCJpYXQiOjE3NzkyODMxNDMsImV4cCI6MTc3OTI4MzQ0M30.say2D6TyBUdk9xlnKcTr9GQFTWHFPGf1SbbeqQ_tYuY^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"content-length: 0^" ^
+  -b ^"_ga=GA1.1.1876619409.1779282995; _fbp=fb.1.1779282996304.785424907238514349; __stripe_mid=0f365a11-bfc4-402b-a7a9-1da0f14091ea8b7e9f; __stripe_sid=f5efce31-d683-4507-9d7a-3327b95ff47e4f64d1; _ga_N5J29RVHDJ=GS2.1.s1779282994^$o1^$g1^$t1779283139^$j60^$l0^$h0^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/chat^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: same-origin^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" &
+curl ^"https://www.google-analytics.com/g/collect?v=2^&tid=G-N5J29RVHDJ^&gtm=45je65i2v9189256461za200zd9189256461^&_p=1779282994789^&gcd=13l3l3l3l1l1^&npa=0^&dma=0^&_eu=AEEAAAQC^&ae=a^&are=1^&cid=1876619409.1779282995^&frm=0^&pscdl=noapi^&rcb=8^&sr=1920x1080^&uaa=x86^&uab=64^&uafvl=Chromium^%^3B148.0.7778.168^%^7CMicrosoft^%^2520Edge^%^3B148.0.3967.70^%^7CNot^%^252FA)Brand^%^3B99.0.0.0^&uam=^&uamb=0^&uap=Windows^&uapv=15.0.0^&uaw=0^&ul=zh-cn^&_s=4^&tag_exp=0~115938466~115938468^&sid=1779282994^&sct=1^&seg=1^&dl=https^%^3A^%^2F^%^2Fbeta.magai.co^%^2Fsignup^%^2Fepa2026^&dt=Magai^%^20^%^C2^%^B7^%^20All^%^20your^%^20AI.^%^20In^%^20one^%^20place^&en=form_submit^&ep.form_id=^&ep.form_destination=https^%^3A^%^2F^%^2Fbeta.magai.co^%^2Fsignup^%^2Fepa2026^&_et=88067^&tfd=151430^" ^
+  -X ^"POST^" ^
+  -H ^"accept: */*^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"content-length: 0^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://beta.magai.co/^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: no-cors^" ^
+  -H ^"sec-fetch-site: cross-site^" ^
+  -H ^"sec-fetch-storage-access: none^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" &
+curl ^"https://api-iam.intercom.io/messenger/web/launcher_settings^" ^
+  -H ^"accept: */*^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"content-type: application/x-www-form-urlencoded^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: cross-site^" ^
+  -H ^"sec-fetch-storage-access: none^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  --data-raw ^"app_id=jnjoad6e^&v=3^&g=a863f5182b5073291a9fd4dfbb6699f733e85b87^&s=07f30633-757c-491e-89ff-d0635730f579^&r=^&platform=web^&installation_type=js-snippet^&installation_version=undefined^&Idempotency-Key=7e0b532b5a64d6ca^&internal=^&is_intersection_booted=false^&page_title=Magai^%^20^%^C2^%^B7^%^20All^%^20your^%^20AI.^%^20In^%^20one^%^20place^&user_active_company_id=undefined^&user_data=^%^7B^%^22email^%^22^%^3A^%^22frank123^%^40outlook.com^%^22^%^2C^%^22intercom_user_jwt^%^22^%^3A^%^22eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZmYwOTIxMzktOTE3NC00NmI0LWE4YTctNzY4MzcyMTkwNDA1IiwiaWF0IjoxNzc5MjgzMTQzLCJleHAiOjE3NzkyODY3NDN9.mYXuEt5cHwh8V9KhSJqH0A1Jp0W1oTR1sQsR0NGo0N0^%^22^%^7D^&referer=https^%^3A^%^2F^%^2Fbeta.magai.co^%^2Fchat^" &
+curl ^"https://api-iam.intercom.io/messenger/web/ping^" ^
+  -H ^"accept: */*^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"content-type: application/x-www-form-urlencoded^" ^
+  -H ^"origin: https://beta.magai.co^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: cross-site^" ^
+  -H ^"sec-fetch-storage-access: none^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  --data-raw ^"app_id=jnjoad6e^&v=3^&g=a863f5182b5073291a9fd4dfbb6699f733e85b87^&s=9f3ce84c-c8d7-439e-9e00-c456a5e2f2e7^&r=^&platform=web^&installation_type=js-snippet^&installation_version=undefined^&Idempotency-Key=0ecd5f09fdd4c08b^&internal=^%^7B^%^7D^&is_intersection_booted=false^&page_title=Magai^%^20^%^C2^%^B7^%^20All^%^20your^%^20AI.^%^20In^%^20one^%^20place^&user_active_company_id=undefined^&user_data=^%^7B^%^22email^%^22^%^3A^%^22frank123^%^40outlook.com^%^22^%^2C^%^22intercom_user_jwt^%^22^%^3A^%^22eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZmYwOTIxMzktOTE3NC00NmI0LWE4YTctNzY4MzcyMTkwNDA1IiwiaWF0IjoxNzc5MjgzMTQzLCJleHAiOjE3NzkyODY3NDN9.mYXuEt5cHwh8V9KhSJqH0A1Jp0W1oTR1sQsR0NGo0N0^%^22^%^2C^%^22name^%^22^%^3A^%^22Frank123^%^22^%^7D^&source=apiBoot^&sampling=false^&referer=https^%^3A^%^2F^%^2Fbeta.magai.co^%^2Fchat^" &
+curl ^"https://m.stripe.com/6^" ^
+  -H ^"accept: */*^" ^
+  -H ^"accept-language: zh-CN,zh;q=0.9^" ^
+  -H ^"cache-control: no-cache^" ^
+  -H ^"content-type: text/plain;charset=UTF-8^" ^
+  -H ^"origin: https://m.stripe.network^" ^
+  -H ^"pragma: no-cache^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://m.stripe.network/^" ^
+  -H ^"sec-ch-ua: ^\^"Chromium^\^";v=^\^"148^\^", ^\^"Microsoft Edge^\^";v=^\^"148^\^", ^\^"Not/A)Brand^\^";v=^\^"99^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: cross-site^" ^
+  -H ^"sec-fetch-storage-access: none^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0^" ^
+  --data-raw ^"JTdCJTIydjIlMjIlM0ExJTJDJTIyaWQlMjIlM0ElMjI5NGVkODY1NDhkOGQ0NTA0MDM1ZDU5NjlhODQ1M2NhYyUyMiUyQyUyMnQlMjIlM0E5LjQlMkMlMjJ0YWclMjIlM0ElMjIlMjRucG1fcGFja2FnZV92ZXJzaW9uJTIyJTJDJTIyc3JjJTIyJTNBJTIyanMlMjIlMkMlMjJhJTIyJTNBbnVsbCUyQyUyMmIlMjIlM0ElN0IlMjJhJTIyJTNBJTIyJTIyJTJDJTIyYiUyMiUzQSUyMmh0dHBzJTNBJTJGJTJGR0JiZXpDQW1hOU1Vd1JyNmxqZ3F1VlcxS05lencwWk0wOGFMQWNKR0dpdy5CR0Fkc1Z2ZnViVmVBY1BvMkRydHRZd1E4cDJHNXBJUHZhRXJuSzI4bXBVLkxUekpLMGt6My1UUjItWlVSQ3R4WDF6bzNwVGwwTFBYTnllY2pCTnUzNlUlMkZpNVg2X2ZydHR4Y3FDQk1FMnMyeFJ4aUhDcWxHOVNJS2VTaEYxT0ZZZXVnJTIyJTJDJTIyYyUyMiUzQSUyMlRFRDZISlJxTmR4SUVUMTllUVFUVE9BekxMY0ptT3JxWk1IUW1MN25YS0ElMjIlMkMlMjJkJTIyJTNBJTIyMGYzNjVhMTEtYmZjNC00MDJiLWE3YTktMWRhMGYxNDA5MWVhOGI3ZTlmJTIyJTJDJTIyZSUyMiUzQSUyMmY1ZWZjZTMxLWQ2ODMtNDUwNy05ZDdhLTMzMjdiOTVmZjQ3ZTRmNjRkMSUyMiUyQyUyMmYlMjIlM0FmYWxzZSUyQyUyMmclMjIlM0F0cnVlJTJDJTIyaCUyMiUzQXRydWUlMkMlMjJpJTIyJTNBJTVCJTIybG9jYXRpb24lMjIlNUQlMkMlMjJqJTIyJTNBJTVCJTVEJTJDJTIybiUyMiUzQTEwOTYuNSUyQyUyMnUlMjIlM0ElMjJiZXRhLm1hZ2FpLmNvJTIyJTJDJTIydyUyMiUzQSUyMjE3NzkyODMxNDY4MzElM0EwMzlmOTBhZTZiNWI5YzhjZjBmYTkzMmE3ODIxNDBjYTRiNDM4ODJkYWMyM2U1YWI5Y2I3NmEyNjZjMzA5NTA1JTIyJTdEJTJDJTIyaCUyMiUzQSUyMjFkMGY1N2FlMjhhYTQ4YzMzZTVlJTIyJTdE^"

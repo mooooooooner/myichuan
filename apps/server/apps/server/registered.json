@@ -1,0 +1,12 @@
+[
+  {
+    "email": "frank4446cfd@outlook.com",
+    "password": "tskq304",
+    "ok": true,
+    "userId": "df5410b2-3d82-4bdd-b452-2e72bc808a4a",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsImtpZCI6IjN3U09sd2IvaDN1OG0wVWQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2JrYXRycGdobXpicGpoZWd2a2V2LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJkZjU0MTBiMi0zZDgyLTRiZGQtYjQ1Mi0yZTcyYmM4MDhhNGEiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5Mjg5NDg5LCJpYXQiOjE3NzkyODU4ODksImVtYWlsIjoiZnJhbms0NDQ2Y2ZkQG91dGxvb2suY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyc3RfbmFtZSI6IkZyYW5rNDQ0NmNmZCIsImlzX3RyaWFsX3NpZ251cCI6dHJ1ZSwibGFzdF9uYW1lIjoiIn0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3NzkyODU4ODl9XSwic2Vzc2lvbl9pZCI6IjBlMjI1MTBjLTBkYzktNDM5NC1iYjcwLWFiOWQxN2NlMzA3NCIsImlzX2Fub255bW91cyI6ZmFsc2V9.SI5QG0PYDIt9N70ZrMeXj8RDrZgKMB1vfNpiuaU5WKo",
+    "refreshToken": "xca75ff6qw7k",
+    "cookie": "",
+    "registeredAt": 1779285885169
+  }
+]

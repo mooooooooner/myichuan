@@ -1,0 +1,9 @@
+﻿node_modules/
+apps/*/node_modules/
+dist/
+.env
+.env.*
+apps/server/.env
+apps/server/accounts.json
+apps/server/registered.json
+*.log
