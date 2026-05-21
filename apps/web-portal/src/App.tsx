@@ -34,6 +34,20 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [jsonText, setJsonText] = useState("[");
+  const [modelsJsonText, setModelsJsonText] = useState(
+    JSON.stringify(
+      [
+        {
+          id: "16c133bc-bab9-41af-b3d4-08dd9157dbca",
+          name: "Claude Sonnet 4.6",
+          apiName: "anthropic/claude-4.6-sonnet-20260217",
+        },
+      ],
+      null,
+      2,
+    ),
+  );
+  const [modelImportAccountId, setModelImportAccountId] = useState("");
   const [keyInput, setKeyInput] = useState(localStorage.getItem("proxy_api_key") || "test-key");
 
   const enabledCount = useMemo(() => accounts.filter((a) => a.enabled).length, [accounts]);
@@ -59,6 +73,18 @@ export default function App() {
       await loadAccounts();
     } catch (e: any) {
       setError(e.message || "import failed");
+    }
+  }
+
+  async function doImportModels() {
+    try {
+      const parsed = JSON.parse(modelsJsonText);
+      const body: Record<string, any> = { models: parsed };
+      if (modelImportAccountId.trim()) body.accountId = modelImportAccountId.trim();
+      await req("/v1/models/import", keyInput, { method: "POST", body: JSON.stringify(body) });
+      await loadAccounts();
+    } catch (e: any) {
+      setError(e.message || "model import failed");
     }
   }
 
@@ -132,6 +158,25 @@ export default function App() {
             Import Now
           </button>
         </div>
+      </section>
+
+      <section className="panel reveal mt-6 rounded-3xl p-6">
+        <h2 className="text-2xl text-white">Import Known Models</h2>
+        <p className="mt-1 text-sm text-slate-400">Paste [{`{ id, name, apiName }`}] extracted from browser history and import as fixed model catalog.</p>
+        <input
+          className="mt-4 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 font-mono text-xs text-slate-100 outline-none transition focus:border-fuchsia-300/60"
+          value={modelImportAccountId}
+          onChange={(e) => setModelImportAccountId(e.target.value)}
+          placeholder="Optional accountId (blank = current round-robin account)"
+        />
+        <textarea
+          className="mt-4 h-56 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 p-4 font-mono text-xs text-slate-100 outline-none transition focus:border-fuchsia-300/60"
+          value={modelsJsonText}
+          onChange={(e) => setModelsJsonText(e.target.value)}
+        />
+        <button className="mt-4 rounded-xl border border-fuchsia-300/50 bg-fuchsia-300/90 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-fuchsia-200" onClick={doImportModels}>
+          Import Models
+        </button>
       </section>
 
       <section className="panel reveal mt-6 rounded-3xl p-6">

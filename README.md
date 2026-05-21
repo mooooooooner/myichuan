@@ -7,7 +7,8 @@
 - OpenAI 兼容：`POST /v1/chat/completions`
 - Anthropic 兼容：`POST /anthropic/v1/messages`、`POST /v1/messages`
 - 自动链路：`refresh_token -> Supabase access_token -> next-action short JWT -> /api/chat`
-- 自动发现：`userId`、`chatId`、模型列表（`/v1/models`）
+- 自动发现：`userId`、`chatId`
+- 固定模型清单：`/v1/models` 返回账号已导入的 known models（不再自动抓取）
 - 多账号轮询：账号池启停、删除、导入、按请求轮询（round-robin）
 - Web 门户：管理账号凭证、查看状态、导入 JSON
 
@@ -128,14 +129,37 @@ curl http://127.0.0.1:8787/v1/models \
   -H "Authorization: Bearer test-key"
 ```
 
-### 6.3 模型列表（指定账号）
+### 6.3 导入模型清单（固定返回源）
+
+```bash
+curl http://127.0.0.1:8787/v1/models/import \
+  -H "Authorization: Bearer test-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountId":"default",
+    "models":[
+      {
+        "id":"16c133bc-bab9-41af-b3d4-08dd9157dbca",
+        "name":"Claude Sonnet 4.6",
+        "apiName":"anthropic/claude-4.6-sonnet-20260217"
+      },
+      {
+        "id":"2ba9020c-96f1-4712-bea4-e3c27a145da1",
+        "name":"DeepSeek v4 Flash",
+        "apiName":"deepseek/deepseek-v4-flash-20260423"
+      }
+    ]
+  }'
+```
+
+### 6.4 模型列表（指定账号）
 
 ```bash
 curl "http://127.0.0.1:8787/v1/models?accountId=default" \
   -H "Authorization: Bearer test-key"
 ```
 
-### 6.4 OpenAI chat
+### 6.5 OpenAI chat
 
 ```bash
 curl http://127.0.0.1:8787/v1/chat/completions \
@@ -148,7 +172,7 @@ curl http://127.0.0.1:8787/v1/chat/completions \
   }'
 ```
 
-### 6.5 Anthropic chat
+### 6.6 Anthropic chat
 
 ```bash
 curl http://127.0.0.1:8787/anthropic/v1/messages \
@@ -169,6 +193,7 @@ curl http://127.0.0.1:8787/anthropic/v1/messages \
 - `POST /v1/accounts/import`：导入账号数组
 - `PATCH /v1/accounts/:id`：更新 `enabled`/`name`
 - `DELETE /v1/accounts/:id`：删除账号
+- `POST /v1/models/import`：导入该账号已知模型清单（`[{id,name,apiName}]`）
 
 导入示例：
 
@@ -194,6 +219,7 @@ curl http://127.0.0.1:8787/anthropic/v1/messages \
 2. 输入 `PROXY_API_KEY`（默认示例是 `test-key`）
 3. 粘贴导出的账号 JSON
 4. 点击导入，查看账号池状态与轮询信息
+5. 在 “Import Known Models” 区域粘贴模型 JSON 并导入
 
 ---
 
@@ -245,16 +271,57 @@ curl http://127.0.0.1:8787/anthropic/v1/messages \
 
 ---
 
+## 9. 浏览器控制台提取“历史使用模型”（id + apiName）
+
+在 `https://beta.magai.co/chat` 打开控制台执行：
+
+```js
+(async () => {
+  const tokenRaw = localStorage.getItem("sb-bkatrpghmzbpjhegvkev-auth-token");
+  if (!tokenRaw) throw new Error("no supabase token in localStorage");
+  const tokenObj = JSON.parse(tokenRaw);
+  const accessToken = tokenObj.access_token;
+  const userId = tokenObj.user?.id;
+
+  const supabaseUrl = "https://bkatrpghmzbpjhegvkev.supabase.co";
+  const apikey = "sb_publishable_abLi4B3uk35xfTdT1d5Z1g_QVGG3JNo";
+  const url = `${supabaseUrl}/rest/v1/spark?select=com_ai_model,chat_json,created_at&created_by=eq.${userId}&order=created_at.desc&limit=1000`;
+
+  const resp = await fetch(url, {
+    headers: { apikey, authorization: `Bearer ${accessToken}`, accept: "application/json" }
+  });
+  const rows = await resp.json();
+  const byId = new Map();
+
+  for (const r of rows) {
+    const id = r?.com_ai_model || "";
+    let apiName = null;
+    try {
+      const cj = typeof r.chat_json === "string" ? JSON.parse(r.chat_json) : r.chat_json;
+      const hit = (Array.isArray(cj?.timeline) ? cj.timeline : []).find(x => typeof x?.modelDisplay === "string" && x.modelDisplay);
+      if (hit) apiName = hit.modelDisplay;
+    } catch {}
+    if (!id) continue;
+    if (!byId.has(id)) byId.set(id, { id, name: apiName || `model-${id.slice(0, 8)}`, apiName });
+  }
+
+  const out = Array.from(byId.values());
+  console.log(out);
+  copy(JSON.stringify(out, null, 2));
+})();
+```
+
+把输出粘贴到 Web 门户的 “Import Known Models” 文本框，点击导入即可。
+
 ## 10. 排障
 
 1. 账号列表为空
 - 检查 Web 门户 API Key 是否与 `PROXY_API_KEY` 一致。
 - 检查服务端是否启动在 `8787`。
 
-2. `/v1/models` 只有 1 个或为空
-- 检查 refresh token 是否已轮换失效。
-- 检查 cookie 是否过期。
-- 可用 `MAGAI_MODEL_CATALOG_JSON` 兜底。
+2. `/v1/models` 为空
+- 先导入 known models（`/v1/models/import` 或 Web 门户导入）。
+- 若仍为空，检查账号是否存在 `magaiDefaultModelId` 或导入 JSON 是否包含 `id`/`name`。
 
 3. 报 `failed to discover userId`
 - 优先检查 cookie。

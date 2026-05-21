@@ -19,6 +19,7 @@ for (const p of envCandidates) {
 const MAGAI_BASE_URL = process.env.MAGAI_BASE_URL || "https://beta.magai.co";
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://bkatrpghmzbpjhegvkev.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || "sb_publishable_abLi4B3uk35xfTdT1d5Z1g_QVGG3JNo";
+const FALLBACK_MAGAI_COOKIE = process.env.MAGAI_COOKIE || "";
 const SIGNUP_PATH = process.env.MAGAI_SIGNUP_PATH || "/signup/epa2026";
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const SERVER_DIR = path.resolve(SCRIPT_DIR, "..");
@@ -288,7 +289,7 @@ function mergeIntoAccountsFile(entries: RegisterResult[]) {
       id,
       name: r.email,
       enabled: true,
-      magaiCookie: r.cookie || "",
+      magaiCookie: r.cookie || FALLBACK_MAGAI_COOKIE,
       supabaseRefreshToken: r.refreshToken,
     });
   }
@@ -368,7 +369,7 @@ async function main() {
       id: `auto-${r.email.replace(/[^a-z0-9]+/g, "-")}-${r.registeredAt}`,
       name: r.email,
       enabled: true,
-      magaiCookie: r.cookie || "",
+      magaiCookie: r.cookie || FALLBACK_MAGAI_COOKIE,
       supabaseRefreshToken: r.refreshToken!,
     }));
 

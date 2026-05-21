@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import { config as loadEnv } from "dotenv";
 import path from "node:path";
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const envCandidates = [
   path.resolve(process.cwd(), ".env"),
@@ -24,6 +25,7 @@ app.use(express.json({ limit: "50mb" }));
 const PORT = Number(process.env.PORT || 8787);
 const PROXY_API_KEY = process.env.PROXY_API_KEY || "";
 const DEFAULT_MAGAI_BASE_URL = process.env.MAGAI_BASE_URL || "https://beta.magai.co";
+const DEFAULT_MAGAI_COOKIE = process.env.MAGAI_COOKIE || "";
 const DEFAULT_MAGAI_NEXT_ACTION = process.env.MAGAI_NEXT_ACTION || "40cd8b2ec4704e0f3c267bd98f93b0f9806e121b77";
 const DEFAULT_SUPABASE_URL = process.env.SUPABASE_URL || "https://bkatrpghmzbpjhegvkev.supabase.co";
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || "";
@@ -35,7 +37,9 @@ const DEFAULT_MAGAI_ALWAYS_NEW_CHAT = process.env.MAGAI_ALWAYS_NEW_CHAT === "1";
 const DEFAULT_MAGAI_USER_ID = process.env.MAGAI_USER_ID || "";
 const DEFAULT_MAGAI_MODEL_CATALOG_JSON = process.env.MAGAI_MODEL_CATALOG_JSON || "";
 const DEFAULT_MAGAI_CHAT_SNAPSHOT_ACTION = process.env.MAGAI_CHAT_SNAPSHOT_ACTION || "40a34afcf0167f40f2afa1b3ff5a65dc8451eac3a6";
-const ACCOUNTS_FILE = process.env.MAGAI_ACCOUNTS_FILE || path.resolve(process.cwd(), "apps/server/accounts.json");
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const SERVER_DIR = path.resolve(SCRIPT_DIR, "..");
+const ACCOUNTS_FILE = process.env.MAGAI_ACCOUNTS_FILE || path.resolve(SERVER_DIR, "accounts.json");
 const FALLBACK_ROUTER_STATE_TREE = `["",{"children":[["path","chat","oc",null],{"children":["__PAGE__",{},null,null,0]},null,null,0]},null,null,16]`;
 
 const startAt = Date.now();
@@ -121,7 +125,7 @@ function makeAccount(input: AccountInput): Account {
     id: (input.id || uuid()).trim(),
     name: (input.name || `account-${Math.floor(Math.random() * 1e5)}`).trim(),
     enabled: input.enabled !== false,
-    magaiCookie: (input.magaiCookie || "").trim(),
+    magaiCookie: (input.magaiCookie || DEFAULT_MAGAI_COOKIE || "").trim(),
     supabaseRefreshToken: (input.supabaseRefreshToken || "").trim(),
     supabasePublishableKey: input.supabasePublishableKey || DEFAULT_SUPABASE_PUBLISHABLE_KEY,
     supabaseUrl: input.supabaseUrl || DEFAULT_SUPABASE_URL,
@@ -250,12 +254,23 @@ function loadConfiguredModelCatalog(account: Account) {
   }
 }
 
+function getKnownModels(account: Account) {
+  const byId = new Map<string, DiscoveredModel>();
+  for (const m of loadConfiguredModelCatalog(account)) upsertModel(byId, m.id, m.name, m.apiName);
+  if (byId.size === 0 && account.magaiDefaultModelId) {
+    const name = account.magaiDefaultModelName || DEFAULT_MAGAI_DEFAULT_MODEL_NAME;
+    upsertModel(byId, account.magaiDefaultModelId, name, account.magaiDefaultModelApiName || undefined);
+  }
+  return Array.from(byId.values());
+}
+
 async function fetchJsonArray(url: string, headers: Record<string, string>) {
   const resp = await fetch(url, { headers });
   if (!resp.ok) return [] as any[];
   const data = await resp.json();
   return Array.isArray(data) ? data : [];
 }
+
 
 async function callServerAction(account: Account, actionId: string, accessToken: string | null, userId: string) {
   const bearer = accessToken || account.supabasePublishableKey || "";
@@ -328,79 +343,64 @@ async function getSupabaseAccessToken(account: Account) {
   return account.cachedSupabaseAccessToken;
 }
 
-async function discoverModelsFromCatalogTables(account: Account, headers: Record<string, string>) {
-  const tableCandidates = ["ai_model", "ai_models", "model", "models", "llm_model", "llm_models", "provider_models", "chat_model"];
-  const out = new Map<string, DiscoveredModel>();
-  for (const table of tableCandidates) {
-    const rows = await fetchJsonArray(`${account.supabaseUrl}/rest/v1/${table}?select=id,name,type,display,slug&limit=500`, headers);
-    for (const row of rows) {
-      const id = String(row?.id || "");
-      const type = String(row?.type || "").toUpperCase();
-      if (!id) continue;
-      if (type && type !== "LLM") continue;
-      upsertModel(out, id, String(row?.name || row?.display || row?.slug || "").trim());
-    }
-  }
-  return Array.from(out.values());
-}
-
 async function refreshDiscovery(account: Account, accessToken: string) {
   const now = Date.now();
-  if (now - account.discovery.ts < 30_000 && account.discovery.models.length > 0 && account.discovery.chatId) return;
+  if (now - account.discovery.ts < 30_000 && account.discovery.chatId) return;
   const payload = decodeJwtPayload(accessToken);
   const userId = payload.sub as string;
   account.discovery.userId = userId;
+
+  // Fresh accounts can have active_team / active_workspace before any chat rows exist.
+  // Pull them directly from user profile to enable new-chat creation.
+  try {
+    const userResp = await fetch(
+      `${account.supabaseUrl}/rest/v1/user?select=active_team,active_workspace&id=eq.${userId}`,
+      {
+        headers: {
+          accept: "application/vnd.pgrst.object+json",
+          apikey: account.supabasePublishableKey || "",
+          authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    if (userResp.ok) {
+      const u = (await userResp.json()) as any;
+      if (u?.active_team && !account.discovery.teamId) account.discovery.teamId = String(u.active_team);
+      if (u?.active_workspace && !account.discovery.workspaceId) account.discovery.workspaceId = String(u.active_workspace);
+    }
+  } catch {
+    // Best-effort only; downstream discovery continues.
+  }
 
   const tokenAction = await callServerAction(account, account.magaiNextAction || DEFAULT_MAGAI_NEXT_ACTION, accessToken, userId);
   if (!tokenAction.ok) throw new Error(`next-action preflight failed: ${tokenAction.status}`);
 
   const h = { apikey: account.supabasePublishableKey || "", authorization: `Bearer ${accessToken}` };
-  const byId = new Map<string, DiscoveredModel>();
-  for (const m of loadConfiguredModelCatalog(account)) upsertModel(byId, m.id, m.name);
-
   const chatRows = await fetchJsonArray(
-    `${account.supabaseUrl}/rest/v1/chat?select=id,ai_model,current_context,team,workspace,modified_at&or=(is_deleted.is.null,is_deleted.eq.false)&created_by=eq.${userId}&order=modified_at.desc&limit=200`,
+    `${account.supabaseUrl}/rest/v1/chat?select=id,team,workspace,modified_at&or=(is_deleted.is.null,is_deleted.eq.false)&created_by=eq.${userId}&order=modified_at.desc&limit=20`,
     h,
   );
   for (const row of chatRows) {
-    if (row?.ai_model) upsertModel(byId, String(row.ai_model));
     if (!account.discovery.chatId && row?.id) account.discovery.chatId = row.id;
     if (!account.discovery.teamId && row?.team) account.discovery.teamId = row.team;
     if (!account.discovery.workspaceId && row?.workspace) account.discovery.workspaceId = row.workspace;
   }
 
-  const sparkRowsByUser = await fetchJsonArray(`${account.supabaseUrl}/rest/v1/spark?select=com_ai_model,chat_json,chat,created_at&created_by=eq.${userId}&order=created_at.desc&limit=400`, h);
-  for (const row of sparkRowsByUser) {
-    const parsed = parseModelNameFromChatJson(row?.chat_json);
-    if (row?.com_ai_model) upsertModel(byId, String(row.com_ai_model), parsed && !parsed.includes("/") ? parsed : parsed, parsed);
-    if (!account.discovery.chatId && row?.chat) account.discovery.chatId = row.chat;
-  }
-
-  const catalog = await discoverModelsFromCatalogTables(account, h);
-  for (const m of catalog) upsertModel(byId, m.id, m.name);
-
   if (!account.discovery.chatId) account.discovery.chatId = extractChatId(tokenAction.text);
-  account.discovery.models = Array.from(byId.values());
+  account.discovery.models = getKnownModels(account);
   account.discovery.ts = now;
 }
 
 function requireDiscoveredModel(account: Account, inputModel: string) {
-  if (account.discovery.models.length === 0 && account.magaiDefaultModelId) {
-    return {
-      id: account.magaiDefaultModelId,
-      name: account.magaiDefaultModelName || DEFAULT_MAGAI_DEFAULT_MODEL_NAME,
-      alias: toAlias(account.magaiDefaultModelName || DEFAULT_MAGAI_DEFAULT_MODEL_NAME),
-      apiName: account.magaiDefaultModelApiName || undefined,
-    };
-  }
+  const known = getKnownModels(account);
+  if (known.length === 0) throw new Error("No known models configured. Import models first.");
   const needle = inputModel.toLowerCase();
   const hit =
-    account.discovery.models.find((m) => m.id.toLowerCase() === needle) ||
-    account.discovery.models.find((m) => m.name.toLowerCase() === needle) ||
-    account.discovery.models.find((m) => m.alias === needle);
+    known.find((m) => m.id.toLowerCase() === needle) ||
+    known.find((m) => m.name.toLowerCase() === needle) ||
+    known.find((m) => m.alias === needle);
   if (hit) return hit;
-  if (account.discovery.models.length > 0) return account.discovery.models[0];
-  throw new Error("No models discovered yet. Retry after refreshing session.");
+  return known[0];
 }
 
 async function createFreshChatId(account: Account, accessToken: string, modelId: string) {
@@ -476,8 +476,14 @@ async function requestMagaiChat(account: Account, input: { model: string; messag
   const resolvedModel = requireDiscoveredModel(account, input.model);
   let chatId = input.chatId || account.discovery.chatId || account.magaiDefaultChatId;
   if (!input.chatId && (input.newChat || account.magaiAlwaysNewChat)) {
-    const accessToken = await getSupabaseAccessToken(account);
-    chatId = await createFreshChatId(account, accessToken, resolvedModel.id);
+    try {
+      const accessToken = await getSupabaseAccessToken(account);
+      chatId = await createFreshChatId(account, accessToken, resolvedModel.id);
+    } catch {
+      // Fallback: if new-chat creation cannot resolve team/workspace for a fresh account,
+      // continue with discovered/default chatId instead of failing the whole request.
+      chatId = input.chatId || account.discovery.chatId || account.magaiDefaultChatId;
+    }
   }
   if (!chatId) throw new Error("chatId not discovered automatically; pass chatId in request body");
   const resp = await fetch(`${account.magaiBaseUrl}/api/chat`, {
@@ -537,14 +543,33 @@ app.delete("/v1/accounts/:id", auth, (req, res) => {
   return res.json({ ok: true, count: accounts.length });
 });
 
+app.post("/v1/models/import", auth, (req, res) => {
+  const account = chooseAccount(String(req.body?.accountId || ""));
+  const models = req.body?.models;
+  if (!Array.isArray(models) || models.length === 0) {
+    return res.status(400).json({ error: { message: "models[] required" } });
+  }
+  const normalized = models
+    .map((m: any) => ({
+      id: String(m?.id || "").trim(),
+      name: String(m?.name || "").trim(),
+      apiName: String(m?.apiName || "").trim(),
+    }))
+    .filter((m: any) => m.id && m.name);
+  if (normalized.length === 0) {
+    return res.status(400).json({ error: { message: "valid models[] required (id + name)" } });
+  }
+  account.magaiModelCatalogJson = JSON.stringify(normalized);
+  account.discovery.models = getKnownModels(account);
+  account.discovery.ts = Date.now();
+  persistAccounts();
+  return res.json({ ok: true, accountId: account.id, count: account.discovery.models.length, data: account.discovery.models });
+});
+
 app.get("/v1/models", auth, async (req, res) => {
   try {
     const account = chooseAccount(String(req.query.accountId || ""));
-    const access = await getSupabaseAccessToken(account);
-    await refreshDiscovery(account, access);
-    if (account.discovery.models.length === 0 && account.magaiDefaultModelId) {
-      account.discovery.models = [{ id: account.magaiDefaultModelId, name: account.magaiDefaultModelName || DEFAULT_MAGAI_DEFAULT_MODEL_NAME, alias: toAlias(account.magaiDefaultModelName || DEFAULT_MAGAI_DEFAULT_MODEL_NAME), apiName: account.magaiDefaultModelApiName || undefined }];
-    }
+    account.discovery.models = getKnownModels(account);
     return res.json({
       object: "list",
       accountId: account.id,
