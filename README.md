@@ -2,6 +2,56 @@
 
 本仓库用于在 CTF/研究场景下，将 `https://beta.magai.co` 的聊天链路封装为 OpenAI/Anthropic 兼容接口，并提供多账号轮询与 Web 管理门户。
 
+## 0. 一键部署（推荐：完全不懂代码也能用）
+
+> 前置：装好 [Node 20+](https://nodejs.org/)。装完打开新的终端窗口（让 `node`/`npm` 进 PATH）。其它依赖（pnpm 等）脚本会自动处理。
+
+```bash
+git clone https://github.com/mooooooooner/magai.co.git
+cd magai.co
+```
+
+**Windows（PowerShell）：**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
+```
+
+**macOS / Linux：**
+
+```bash
+bash scripts/setup.sh
+```
+
+脚本会：
+
+1. 检查 Node / pnpm（缺 pnpm 自动用 corepack 启用）
+2. 帮你生成 `apps/server/.env`，并交互式地让你输入：
+   - `PROXY_API_KEY`（你的 client 用的密钥；按 Enter 自动生成 32 位随机串）
+   - 要自动注册多少个 Magai 账号（推荐 3）
+3. `pnpm install` 安装依赖
+4. 调注册脚本批量创建账号、写入 `accounts.json`，并自动回填 email/password 兜底
+5. 注入默认模型清单（Claude Sonnet 4.6）
+6. 询问是否立刻启动 server（:8787）+ web portal（:5174）
+
+启动后浏览器打开 `http://127.0.0.1:5174`，输入刚刚生成的 `PROXY_API_KEY` 就能用。
+
+非交互模式（CI / 脚本里调）：
+
+```powershell
+# Windows
+powershell -ExecutionPolicy Bypass -File scripts\setup.ps1 -RegisterCount 3 -ProxyApiKey my-key -NoStart
+```
+
+```bash
+# macOS / Linux
+bash scripts/setup.sh --register-count 3 --proxy-key my-key --no-start
+```
+
+> ⚠️ `accounts.json` / `.env` 含明文密码，**已被 `.gitignore` 排除**——切勿手动 `git add -f` 它们。
+
+---
+
 ## 1. 项目能力
 
 - OpenAI 兼容：`POST /v1/chat/completions`
@@ -339,6 +389,65 @@ curl http://127.0.0.1:8787/v1/images/generations \
 
 把输出粘贴到 Web 门户的 “Import Known Models” 文本框，点击导入即可。
 
+## 9.5 Token 持久化机制（2026-05-21 重构）
+
+> 解决"refresh token 过期太快 / 被 reuse 吊销 / 重启后失效"等问题。
+
+### 链路
+
+| Token | 寿命 | 续期路径 |
+|---|---|---|
+| Magai short JWT (next-action) | 几分钟 | 自动重新调 next-action |
+| Supabase access_token | 1 小时（GoTrue 默认 `JWT_EXPIRY=3600`） | refresh_token grant；失败时 password grant 兜底 |
+| Supabase refresh_token | 受 GoTrue 配置影响（reuse interval / inactivity timeout / 家族吊销） | 每次刷新会自动轮换，写回 `accounts.json` |
+| 账号密码 | 永久（除非账号被封） | 注册/登录脚本写出，作为最后兜底 |
+
+### 关键改动
+
+1. **password grant 兜底**：refresh 任意失败（`refresh_token_already_used` / `invalid_grant` / 网络错误 / 401 等）会自动用 `supabaseEmail + supabasePassword` 重新登录拿到新的 refresh_token，整条链路自愈。
+2. **并发去重**：`account.refreshPromise` 让 N 个并发请求只触发 1 次刷新调用，彻底消除"两条请求同时用旧 refresh_token → 第二条触发 reuse detection → 整个 session family 被吊销"的死局。
+3. **提前 5 分钟续期**：缓存阈值从 30s 改成 300s，远离 Supabase reuse-interval 危险窗口。
+4. **原子写盘**：`accounts.json` 改用 tmp + rename，并通过单链 Promise 队列串行化。再不会出现"两个账号同时刷新 → 写盘竞争 → 新 refresh_token 被旧值覆盖"。
+5. **后台心跳**：每 50 分钟主动遍历启用账号刷新一次。
+   - 让 refresh_token 始终"在使用中"，触发不了 inactivity timeout
+   - 用户请求路径上零延迟（access_token 永远是热的）
+   - 单点续期 + 单飞 promise，天然消除并发竞争
+
+环境变量：
+
+```env
+# 默认 50 分钟。设 0 仍会被钳到 60s。
+MAGAI_HEARTBEAT_INTERVAL_MS=3000000
+# 1 = 关闭后台心跳（不推荐）
+MAGAI_HEARTBEAT_DISABLE=0
+```
+
+### accounts.json 新增字段（向后兼容）
+
+```jsonc
+{
+  "id": "auto-...",
+  "name": "frank0508upp@outlook.com",
+  "enabled": true,
+  "magaiCookie": "...",
+  "supabaseRefreshToken": "...",
+  "supabaseEmail": "frank0508upp@outlook.com",   // 新增：password grant 兜底
+  "supabasePassword": "trfn590"                  // 新增：password grant 兜底
+}
+```
+
+### 给老账号回填密码
+
+注册脚本现在自动写 `supabaseEmail/supabasePassword`。如果你已有的 `accounts.json` 是改造前生成的，跑一次回填脚本（基于 `registered.json` join）：
+
+```bash
+pnpm --filter @apps/server exec tsx src/backfill-credentials.ts
+```
+
+输出形如：`[backfill] filled=4 already=0 no-match=0 total=4`。
+
+---
+
 ## 10. 排障
 
 1. 账号列表为空
@@ -359,7 +468,8 @@ curl http://127.0.0.1:8787/v1/images/generations \
 - 或配置 `MAGAI_DEFAULT_CHAT_ID`。
 
 5. `refresh_token_already_used`
-- refresh token 已轮换，需更新为最新 token。
+- 重构后已显著缓解：并发去重 + 提前续期 + password grant 兜底，绝大多数场景会自愈。
+- 若仍出现且账号没有 `supabaseEmail/supabasePassword`，请跑回填脚本或重新注册。
 
 ---
 
