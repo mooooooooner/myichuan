@@ -291,6 +291,8 @@ function mergeIntoAccountsFile(entries: RegisterResult[]) {
       enabled: true,
       magaiCookie: r.cookie || FALLBACK_MAGAI_COOKIE,
       supabaseRefreshToken: r.refreshToken,
+      supabaseEmail: r.email,
+      supabasePassword: r.password,
     });
   }
   fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(existing, null, 2), "utf8");
@@ -371,6 +373,8 @@ async function main() {
       enabled: true,
       magaiCookie: r.cookie || FALLBACK_MAGAI_COOKIE,
       supabaseRefreshToken: r.refreshToken!,
+      supabaseEmail: r.email,
+      supabasePassword: r.password,
     }));
 
   if (exportPath) {

@@ -6,8 +6,11 @@ type Account = {
   enabled: boolean;
   hasCookie: boolean;
   hasRefreshToken: boolean;
+  hasPassword: boolean;
+  supabaseEmail: string;
   lastError: string;
   lastUsedAt: number;
+  lastRefreshAt: number;
   discovery: { chatId: string; userId: string; modelCount: number; ts: number };
 };
 
@@ -278,7 +281,8 @@ export default function App() {
                   <button className="rounded-lg border border-rose-400/50 px-3 py-1 text-xs text-rose-200 transition hover:bg-rose-500/10" onClick={() => remove(a.id)}>Delete</button>
                 </div>
               </div>
-              <p className="mt-3 text-xs text-slate-300">cookie: {a.hasCookie ? "ok" : "missing"} | refresh: {a.hasRefreshToken ? "ok" : "missing"} | models: {a.discovery.modelCount} | chatId: {a.discovery.chatId || "-"}</p>
+              <p className="mt-3 text-xs text-slate-300">cookie: {a.hasCookie ? "ok" : "missing"} | refresh: {a.hasRefreshToken ? "ok" : "missing"} | password: {a.hasPassword ? "ok" : "missing"} | models: {a.discovery.modelCount} | chatId: {a.discovery.chatId || "-"}</p>
+              <p className="mt-1 text-xs text-slate-400">email: {a.supabaseEmail || "-"} | last refresh: {ago(a.lastRefreshAt)}</p>
               <p className="mt-1 text-xs text-slate-400">lastError: {a.lastError || "none"}</p>
             </article>
           ))}

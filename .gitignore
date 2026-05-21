@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 apps/*/node_modules/
 dist/
 .env
@@ -7,3 +7,6 @@ apps/server/.env
 apps/server/accounts.json
 apps/server/registered.json
 *.log
+# transient test outputs from scripts/test-token-*.ps1
+output*.txt
+apps/server/tmp-*.log

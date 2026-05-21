@@ -58,6 +58,8 @@ type AccountInput = {
   enabled?: boolean;
   magaiCookie?: string;
   supabaseRefreshToken?: string;
+  supabaseEmail?: string;
+  supabasePassword?: string;
   supabasePublishableKey?: string;
   supabaseUrl?: string;
   magaiBaseUrl?: string;
@@ -83,6 +85,8 @@ type Account = Required<Pick<AccountInput, "id" | "name" | "enabled" | "magaiCoo
     currentRefreshToken: string;
     lastError?: string;
     lastUsedAt?: number;
+    lastRefreshAt?: number;
+    refreshPromise?: Promise<string> | null;
   };
 
 const stats: Record<"openai" | "anthropic", Stat> = {
@@ -120,8 +124,11 @@ function scrubAccount(a: Account) {
     enabled: a.enabled,
     hasCookie: !!a.magaiCookie,
     hasRefreshToken: !!a.currentRefreshToken,
+    hasPassword: !!(a.supabaseEmail && a.supabasePassword),
+    supabaseEmail: a.supabaseEmail || "",
     lastError: a.lastError || "",
     lastUsedAt: a.lastUsedAt || 0,
+    lastRefreshAt: a.lastRefreshAt || 0,
     discovery: { chatId: a.discovery.chatId || "", userId: a.discovery.userId || "", modelCount: a.discovery.models.length, ts: a.discovery.ts || 0 },
   };
 }
@@ -133,6 +140,8 @@ function makeAccount(input: AccountInput): Account {
     enabled: input.enabled !== false,
     magaiCookie: (input.magaiCookie || DEFAULT_MAGAI_COOKIE || "").trim(),
     supabaseRefreshToken: (input.supabaseRefreshToken || "").trim(),
+    supabaseEmail: (input.supabaseEmail || "").trim(),
+    supabasePassword: input.supabasePassword || "",
     supabasePublishableKey: input.supabasePublishableKey || DEFAULT_SUPABASE_PUBLISHABLE_KEY,
     supabaseUrl: input.supabaseUrl || DEFAULT_SUPABASE_URL,
     magaiBaseUrl: input.magaiBaseUrl || DEFAULT_MAGAI_BASE_URL,
@@ -153,6 +162,7 @@ function makeAccount(input: AccountInput): Account {
     cachedSupabaseAccessToken: "",
     cachedSupabaseAccessExp: 0,
     currentRefreshToken: (input.supabaseRefreshToken || "").trim(),
+    refreshPromise: null,
   };
 }
 
@@ -167,31 +177,47 @@ function loadAccountsFromDisk() {
   }
 }
 
+let persistQueue: Promise<void> = Promise.resolve();
 function persistAccounts() {
-  const dir = path.dirname(ACCOUNTS_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  const serializable = accounts.map((a) => ({
-    id: a.id,
-    name: a.name,
-    enabled: a.enabled,
-    magaiCookie: a.magaiCookie,
-    supabaseRefreshToken: a.currentRefreshToken || a.supabaseRefreshToken,
-    supabasePublishableKey: a.supabasePublishableKey || "",
-    supabaseUrl: a.supabaseUrl || "",
-    magaiBaseUrl: a.magaiBaseUrl || "",
-    magaiNextAction: a.magaiNextAction || "",
-    magaiChatSnapshotAction: a.magaiChatSnapshotAction || "",
-    magaiUserId: a.magaiUserId || "",
-    magaiDefaultChatId: a.magaiDefaultChatId || "",
-    magaiDefaultModelId: a.magaiDefaultModelId || "",
-    magaiDefaultModelName: a.magaiDefaultModelName || "",
-    magaiDefaultModelApiName: a.magaiDefaultModelApiName || "",
-    magaiModelCatalogJson: a.magaiModelCatalogJson || "",
-    magaiAlwaysNewChat: !!a.magaiAlwaysNewChat,
-    magaiImageAction: a.magaiImageAction || "",
-    magaiImagePreset: a.magaiImagePreset || "",
-  }));
-  fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(serializable, null, 2), "utf8");
+  // Serialize all writes through a single chain to avoid concurrent overwrites
+  // clobbering rotated refresh_tokens. Each call is atomic via tmp+rename.
+  persistQueue = persistQueue.then(async () => {
+    const dir = path.dirname(ACCOUNTS_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const serializable = accounts.map((a) => ({
+      id: a.id,
+      name: a.name,
+      enabled: a.enabled,
+      magaiCookie: a.magaiCookie,
+      supabaseRefreshToken: a.currentRefreshToken || a.supabaseRefreshToken,
+      supabaseEmail: a.supabaseEmail || "",
+      supabasePassword: a.supabasePassword || "",
+      supabasePublishableKey: a.supabasePublishableKey || "",
+      supabaseUrl: a.supabaseUrl || "",
+      magaiBaseUrl: a.magaiBaseUrl || "",
+      magaiNextAction: a.magaiNextAction || "",
+      magaiChatSnapshotAction: a.magaiChatSnapshotAction || "",
+      magaiUserId: a.magaiUserId || "",
+      magaiDefaultChatId: a.magaiDefaultChatId || "",
+      magaiDefaultModelId: a.magaiDefaultModelId || "",
+      magaiDefaultModelName: a.magaiDefaultModelName || "",
+      magaiDefaultModelApiName: a.magaiDefaultModelApiName || "",
+      magaiModelCatalogJson: a.magaiModelCatalogJson || "",
+      magaiAlwaysNewChat: !!a.magaiAlwaysNewChat,
+      magaiImageAction: a.magaiImageAction || "",
+      magaiImagePreset: a.magaiImagePreset || "",
+    }));
+    const tmp = `${ACCOUNTS_FILE}.tmp.${process.pid}.${Date.now()}`;
+    try {
+      await fs.promises.writeFile(tmp, JSON.stringify(serializable, null, 2), "utf8");
+      await fs.promises.rename(tmp, ACCOUNTS_FILE);
+    } catch (e) {
+      try { await fs.promises.unlink(tmp); } catch {}
+      throw e;
+    }
+  }).catch((e) => {
+    console.error("[persistAccounts] failed:", (e as Error)?.message || e);
+  });
 }
 
 function bootstrapAccounts() {
@@ -328,29 +354,105 @@ async function callChatAction(account: Account, actionId: string, accessToken: s
   return { ok: resp.ok, status: resp.status, text: txt };
 }
 
-async function getSupabaseAccessToken(account: Account) {
-  const now = Math.floor(Date.now() / 1000);
-  if (account.cachedSupabaseAccessToken && account.cachedSupabaseAccessExp - 30 > now) return account.cachedSupabaseAccessToken;
-  if (!account.supabasePublishableKey || !account.currentRefreshToken) throw new Error("supabase credentials not configured");
-  const resp = await fetch(`${account.supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+async function supabasePasswordSignIn(account: Account) {
+  if (!account.supabaseEmail || !account.supabasePassword) {
+    throw new Error("password fallback unavailable: supabaseEmail/supabasePassword not configured");
+  }
+  const resp = await fetch(`${account.supabaseUrl}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: {
-      "content-type": "application/json",
-      apikey: account.supabasePublishableKey,
-      authorization: `Bearer ${account.supabasePublishableKey}`,
+      accept: "*/*",
+      apikey: account.supabasePublishableKey || "",
+      authorization: `Bearer ${account.supabasePublishableKey || ""}`,
+      "content-type": "application/json;charset=UTF-8",
+      "x-client-info": "supabase-js-web/2.74.0",
+      "x-supabase-api-version": "2024-01-01",
     },
-    body: JSON.stringify({ refresh_token: account.currentRefreshToken }),
+    body: JSON.stringify({ email: account.supabaseEmail, password: account.supabasePassword, gotrue_meta_security: {} }),
   });
-  if (!resp.ok) throw new Error(`refresh token failed: ${resp.status}`);
-  const data = (await resp.json()) as any;
-  account.cachedSupabaseAccessToken = data.access_token;
-  account.cachedSupabaseAccessExp = Number(data.expires_at || decodeJwtExp(data.access_token));
-  if (data.refresh_token) {
-    account.currentRefreshToken = data.refresh_token;
-    account.supabaseRefreshToken = data.refresh_token;
-    persistAccounts();
+  const data = (await resp.json().catch(() => null)) as any;
+  if (!resp.ok || !data?.access_token) {
+    throw new Error(`password signin failed: ${resp.status} ${JSON.stringify(data).slice(0, 200)}`);
   }
-  return account.cachedSupabaseAccessToken;
+  return data;
+}
+
+async function refreshSupabaseTokenLocked(account: Account): Promise<string> {
+  // Tries refresh_token first; falls back to password grant if email/password are
+  // configured. Either path writes back the freshly-issued refresh_token so the
+  // next call has a valid one.
+  let lastErr: any = null;
+
+  if (account.currentRefreshToken && account.supabasePublishableKey) {
+    try {
+      const resp = await fetch(`${account.supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          apikey: account.supabasePublishableKey,
+          authorization: `Bearer ${account.supabasePublishableKey}`,
+        },
+        body: JSON.stringify({ refresh_token: account.currentRefreshToken }),
+      });
+      if (resp.ok) {
+        const data = (await resp.json()) as any;
+        account.cachedSupabaseAccessToken = data.access_token;
+        account.cachedSupabaseAccessExp = Number(data.expires_at || decodeJwtExp(data.access_token));
+        if (data.refresh_token) {
+          account.currentRefreshToken = data.refresh_token;
+          account.supabaseRefreshToken = data.refresh_token;
+          persistAccounts();
+        }
+        account.lastRefreshAt = Date.now();
+        account.lastError = "";
+        return account.cachedSupabaseAccessToken;
+      }
+      lastErr = new Error(`refresh token failed: ${resp.status}`);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+
+  // Fallback: password grant. Survives refresh_token_already_used, invalid_grant,
+  // inactivity timeout, family revocation, etc.
+  if (account.supabaseEmail && account.supabasePassword) {
+    const data = await supabasePasswordSignIn(account);
+    account.cachedSupabaseAccessToken = data.access_token;
+    account.cachedSupabaseAccessExp = Number(data.expires_at || decodeJwtExp(data.access_token));
+    if (data.refresh_token) {
+      account.currentRefreshToken = data.refresh_token;
+      account.supabaseRefreshToken = data.refresh_token;
+      persistAccounts();
+    }
+    account.lastRefreshAt = Date.now();
+    account.lastError = "";
+    return account.cachedSupabaseAccessToken;
+  }
+
+  throw lastErr || new Error("supabase credentials not configured");
+}
+
+async function getSupabaseAccessToken(account: Account) {
+  const now = Math.floor(Date.now() / 1000);
+  // Renew 5 minutes early (was 30s) to give breathing room to refresh-token
+  // reuse-interval windows and avoid mid-request expiry.
+  if (account.cachedSupabaseAccessToken && account.cachedSupabaseAccessExp - 300 > now) return account.cachedSupabaseAccessToken;
+  if (!account.supabasePublishableKey) throw new Error("supabase credentials not configured");
+  if (!account.currentRefreshToken && !(account.supabaseEmail && account.supabasePassword)) {
+    throw new Error("supabase credentials not configured");
+  }
+  // In-flight de-duplication: N concurrent requests share one refresh round-trip.
+  if (account.refreshPromise) return account.refreshPromise;
+  const p = refreshSupabaseTokenLocked(account)
+    .catch((e) => {
+      account.lastError = (e as Error)?.message || "refresh failed";
+      throw e;
+    })
+    .finally(() => {
+      account.refreshPromise = null;
+    });
+  account.refreshPromise = p;
+  return p;
 }
 
 async function refreshDiscovery(account: Account, accessToken: string) {
@@ -834,5 +936,49 @@ app.post("/v1/images/generations", auth, async (req, res) => {
   }
 });
 
+// Background heartbeat: proactively refresh access_token for every enabled
+// account, on a cadence shorter than the JWT TTL. Goals:
+//  - Keep refresh_token "in use" so inactivity timeout never fires.
+//  - Pre-warm the cache so user requests never pay refresh latency.
+//  - Single-flight per account (refreshPromise dedup) avoids the dangerous
+//    parallel-refresh-token-reuse window.
+//
+// Cadence: 50min default; tuneable via MAGAI_HEARTBEAT_INTERVAL_MS. Disable
+// with MAGAI_HEARTBEAT_DISABLE=1.
+const HEARTBEAT_INTERVAL_MS = Math.max(60_000, Number(process.env.MAGAI_HEARTBEAT_INTERVAL_MS || 50 * 60 * 1000));
+const HEARTBEAT_DISABLED = process.env.MAGAI_HEARTBEAT_DISABLE === "1";
+
+async function heartbeatTick() {
+  const targets = accounts.filter((a) => a.enabled && (a.currentRefreshToken || (a.supabaseEmail && a.supabasePassword)));
+  if (targets.length === 0) return;
+  // Stagger refreshes a bit to avoid hammering Supabase in lockstep when many accounts share an upstream.
+  const stride = Math.min(2_000, Math.floor(HEARTBEAT_INTERVAL_MS / Math.max(1, targets.length * 4)));
+  for (let i = 0; i < targets.length; i++) {
+    const a = targets[i];
+    try {
+      // Force renewal even if cached token still has runway: pretend it's expired.
+      a.cachedSupabaseAccessExp = 0;
+      await getSupabaseAccessToken(a);
+    } catch (e) {
+      a.lastError = `heartbeat: ${(e as Error)?.message || e}`;
+      console.warn(`[heartbeat] ${a.name} (${a.id}) failed: ${a.lastError}`);
+    }
+    if (stride > 0 && i + 1 < targets.length) await new Promise((r) => setTimeout(r, stride));
+  }
+}
+
+function startHeartbeat() {
+  if (HEARTBEAT_DISABLED) {
+    console.log("[heartbeat] disabled via MAGAI_HEARTBEAT_DISABLE=1");
+    return;
+  }
+  // Kick off a first tick shortly after boot so a freshly-restarted proxy warms up
+  // accounts even before any traffic arrives. Then run on the configured cadence.
+  setTimeout(() => { heartbeatTick().catch(() => {}); }, 5_000);
+  setInterval(() => { heartbeatTick().catch(() => {}); }, HEARTBEAT_INTERVAL_MS).unref?.();
+  console.log(`[heartbeat] enabled; interval=${HEARTBEAT_INTERVAL_MS}ms`);
+}
+
 bootstrapAccounts();
+startHeartbeat();
 app.listen(PORT, () => console.log(`magai proxy listening on :${PORT}; accounts=${accounts.length}; file=${ACCOUNTS_FILE}; env=${loadedEnvPath || "none"}`));
