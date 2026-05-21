@@ -36,6 +36,10 @@ const DEFAULT_MAGAI_DEFAULT_MODEL_API_NAME = process.env.MAGAI_DEFAULT_MODEL_API
 const DEFAULT_MAGAI_ALWAYS_NEW_CHAT = process.env.MAGAI_ALWAYS_NEW_CHAT === "1";
 const DEFAULT_MAGAI_USER_ID = process.env.MAGAI_USER_ID || "";
 const DEFAULT_MAGAI_MODEL_CATALOG_JSON = process.env.MAGAI_MODEL_CATALOG_JSON || "";
+const DEFAULT_MAGAI_IMAGE_ACTION = process.env.MAGAI_IMAGE_ACTION || "7fa3b9255f2ff4eef604b8c9a7bbc1b37ceb871dae";
+const DEFAULT_MAGAI_IMAGE_PRESET = process.env.MAGAI_IMAGE_PRESET || "v2";
+const DEFAULT_MAGAI_IMAGE_MODEL_NAME = process.env.MAGAI_IMAGE_MODEL_NAME || "Nano Banana";
+const DEFAULT_MAGAI_IMAGE_RESOLUTION = process.env.MAGAI_IMAGE_RESOLUTION || "1K";
 const DEFAULT_MAGAI_CHAT_SNAPSHOT_ACTION = process.env.MAGAI_CHAT_SNAPSHOT_ACTION || "40a34afcf0167f40f2afa1b3ff5a65dc8451eac3a6";
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const SERVER_DIR = path.resolve(SCRIPT_DIR, "..");
@@ -66,6 +70,8 @@ type AccountInput = {
   magaiDefaultModelApiName?: string;
   magaiModelCatalogJson?: string;
   magaiAlwaysNewChat?: boolean;
+  magaiImageAction?: string;
+  magaiImagePreset?: string;
 };
 type Account = Required<Pick<AccountInput, "id" | "name" | "enabled" | "magaiCookie" | "supabaseRefreshToken">> &
   Omit<AccountInput, "id" | "name" | "enabled" | "magaiCookie" | "supabaseRefreshToken"> & {
@@ -139,6 +145,8 @@ function makeAccount(input: AccountInput): Account {
     magaiDefaultModelApiName: input.magaiDefaultModelApiName || DEFAULT_MAGAI_DEFAULT_MODEL_API_NAME,
     magaiModelCatalogJson: input.magaiModelCatalogJson || DEFAULT_MAGAI_MODEL_CATALOG_JSON,
     magaiAlwaysNewChat: input.magaiAlwaysNewChat ?? DEFAULT_MAGAI_ALWAYS_NEW_CHAT,
+    magaiImageAction: input.magaiImageAction || DEFAULT_MAGAI_IMAGE_ACTION,
+    magaiImagePreset: input.magaiImagePreset || DEFAULT_MAGAI_IMAGE_PRESET,
     discovery: { models: [], ts: 0 },
     cachedMagaiJwt: "",
     cachedMagaiJwtExp: 0,
@@ -180,6 +188,8 @@ function persistAccounts() {
     magaiDefaultModelApiName: a.magaiDefaultModelApiName || "",
     magaiModelCatalogJson: a.magaiModelCatalogJson || "",
     magaiAlwaysNewChat: !!a.magaiAlwaysNewChat,
+    magaiImageAction: a.magaiImageAction || "",
+    magaiImagePreset: a.magaiImagePreset || "",
   }));
   fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(serializable, null, 2), "utf8");
 }
@@ -511,6 +521,99 @@ async function requestMagaiChat(account: Account, input: { model: string; messag
   return resp;
 }
 
+function toAspectRatio(size?: string) {
+  const val = (size || "").trim().toLowerCase();
+  if (!val) return "1:1";
+  if (val === "1024x1024" || val === "1:1") return "1:1";
+  if (val === "1024x1536" || val === "2:3") return "2:3";
+  if (val === "1536x1024" || val === "3:2") return "3:2";
+  if (val === "1024x1792" || val === "9:16") return "9:16";
+  if (val === "1792x1024" || val === "16:9") return "16:9";
+  if (val === "1152x896" || val === "9:7") return "9:7";
+  if (val === "896x1152" || val === "7:9") return "7:9";
+  return "1:1";
+}
+
+function extractImagePayload(text: string) {
+  const urls = Array.from(new Set((text.match(/https?:\/\/[^\s"'\\]+/g) || []).filter((u) => /(png|jpe?g|webp|gif)(\?|$)/i.test(u))));
+  const dataUrl = text.match(/data:image\/[a-zA-Z+.-]+;base64,([a-zA-Z0-9+/=]+)/)?.[1] || "";
+  const b64 =
+    dataUrl ||
+    text.match(/"([A-Za-z0-9+/]{200,}={0,2})"/)?.[1] ||
+    "";
+  return { urls, b64 };
+}
+
+async function requestMagaiImage(
+  account: Account,
+  input: { prompt: string; size?: string; quality?: string; chatId?: string; accountId?: string; style?: string; background?: string },
+) {
+  const token = await getMagaiShortJwt(account);
+  const accessToken = await getSupabaseAccessToken(account);
+  await refreshDiscovery(account, accessToken);
+  const userId = account.discovery.userId || account.magaiUserId;
+  if (!userId) throw new Error("userId not discovered automatically");
+  const aspectRatio = toAspectRatio(input.size);
+  const preset = account.magaiImagePreset || DEFAULT_MAGAI_IMAGE_PRESET;
+  const modelLabel = DEFAULT_MAGAI_IMAGE_MODEL_NAME;
+  const resolution = DEFAULT_MAGAI_IMAGE_RESOLUTION;
+  const bodyCandidates = [
+    JSON.stringify(["", aspectRatio, userId, preset, modelLabel, "$undefined", resolution, null, "$undefined"]),
+    JSON.stringify([input.prompt, aspectRatio, userId, preset, modelLabel, "$undefined", resolution, null, "$undefined"]),
+    JSON.stringify(["", aspectRatio, userId, preset, modelLabel, input.prompt, resolution, null, "$undefined"]),
+  ];
+  const actionCandidates = Array.from(new Set([account.magaiImageAction || "", DEFAULT_MAGAI_IMAGE_ACTION, "7f58ff553f4cfd13f25c1a6204f1dcf10061086e3c", "7fa3b9255f2ff4eef604b8c9a7bbc1b37ceb871dae"].filter(Boolean)));
+  const baseAttempts: Array<Omit<Record<string, string>, "next-action">> = [
+    {
+      accept: "text/x-component",
+      "content-type": "text/plain;charset=UTF-8",
+      "next-router-state-tree": FALLBACK_ROUTER_STATE_TREE,
+      cookie: account.magaiCookie,
+      origin: account.magaiBaseUrl || "",
+      referer: `${account.magaiBaseUrl}/chat`,
+      "cache-control": "no-cache",
+      pragma: "no-cache",
+    },
+    {
+      accept: "text/x-component",
+      "content-type": "text/plain;charset=UTF-8",
+      "next-router-state-tree": FALLBACK_ROUTER_STATE_TREE,
+      cookie: account.magaiCookie,
+      apikey: account.supabasePublishableKey || "",
+      authorization: `Bearer ${accessToken}`,
+      origin: account.magaiBaseUrl || "",
+      referer: `${account.magaiBaseUrl}/chat`,
+      "cache-control": "no-cache",
+      pragma: "no-cache",
+    },
+    {
+      accept: "text/x-component",
+      "content-type": "text/plain;charset=UTF-8",
+      "next-router-state-tree": FALLBACK_ROUTER_STATE_TREE,
+      cookie: account.magaiCookie,
+      apikey: account.supabasePublishableKey || "",
+      authorization: `Bearer ${token}`,
+      origin: account.magaiBaseUrl || "",
+      referer: `${account.magaiBaseUrl}/chat`,
+      "cache-control": "no-cache",
+      pragma: "no-cache",
+    },
+  ];
+  let lastErr = "";
+  for (const actionId of actionCandidates) {
+    for (const body of bodyCandidates) {
+      for (const base of baseAttempts) {
+        const headers = { ...base, "next-action": actionId };
+        const resp = await fetch(`${account.magaiBaseUrl}/chat`, { method: "POST", headers, body });
+        const text = await resp.text();
+        if (resp.ok && !/\n1:E\{/.test(text) && !/"switched":false/.test(text)) return text;
+        lastErr = `action=${actionId}; status=${resp.status}; body=${text.slice(0, 500)}`;
+      }
+    }
+  }
+  throw new Error(`image action failed: ${lastErr}`);
+}
+
 app.get("/health", (_req, res) => res.json({ ok: true, accountCount: accounts.length, enabledCount: accounts.filter((a) => a.enabled).length }));
 app.get("/v1/accounts", auth, (_req, res) => res.json({ object: "list", data: accounts.map(scrubAccount), rrPointer }));
 app.post("/v1/accounts/import", auth, (req, res) => {
@@ -680,6 +783,55 @@ app.post(["/anthropic/v1/messages", "/v1/messages"], auth, async (req, res) => {
   const messages = req.body?.messages || [];
   if (!model || !Array.isArray(messages)) return res.status(400).json({ error: { message: "invalid payload" } });
   return proxyNdjsonToOpenAI(req, res, "anthropic", !!req.body?.stream, model, messages, req.body?.metadata?.chatId, true, !!req.body?.metadata?.newChat);
+});
+
+app.post("/v1/images/generations", auth, async (req, res) => {
+  let account: Account | null = null;
+  try {
+    const prompt = String(req.body?.prompt || "").trim();
+    if (!prompt) return res.status(400).json({ error: { message: "prompt required" } });
+    account = chooseAccount(String(req.body?.accountId || ""));
+    const raw = await requestMagaiImage(account, {
+      prompt,
+      size: req.body?.size,
+      quality: req.body?.quality,
+      style: req.body?.style,
+      background: req.body?.background,
+      chatId: req.body?.chatId,
+      accountId: req.body?.accountId,
+    });
+    const { urls, b64 } = extractImagePayload(raw);
+    if (urls.length === 0 && !b64) throw new Error(`no image payload parsed from upstream response; raw=${raw.slice(0, 1200)}`);
+    const n = Math.max(1, Math.min(Number(req.body?.n || 1), 4));
+    const responseFormat = String(req.body?.response_format || "url");
+    const resolvedB64 = b64 || (responseFormat === "b64_json" && urls[0]
+      ? await (async () => {
+          try {
+            const imgResp = await fetch(urls[0]);
+            if (!imgResp.ok) return "";
+            const buf = Buffer.from(await imgResp.arrayBuffer());
+            return buf.toString("base64");
+          } catch {
+            return "";
+          }
+        })()
+      : "");
+    const data = Array.from({ length: n }).map((_, idx) => {
+      const url = urls[idx] || urls[0] || "";
+      const entry: any = {};
+      if (responseFormat === "b64_json") {
+        entry.b64_json = resolvedB64 || "";
+      } else {
+        entry.url = url;
+      }
+      entry.revised_prompt = prompt;
+      return entry;
+    });
+    return res.json({ created: Math.floor(Date.now() / 1000), data });
+  } catch (e: any) {
+    if (account) account.lastError = e?.message || "image proxy error";
+    return res.status(500).json({ error: { message: e?.message || "image proxy error" } });
+  }
 });
 
 bootstrapAccounts();

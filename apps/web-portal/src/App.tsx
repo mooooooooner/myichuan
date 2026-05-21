@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Account = {
   id: string;
@@ -10,6 +10,15 @@ type Account = {
   lastUsedAt: number;
   discovery: { chatId: string; userId: string; modelCount: number; ts: number };
 };
+
+type ModelItem = {
+  id: string;
+  object: string;
+  owned_by: string;
+  meta?: { magaiModelId?: string; magaiModelName?: string; magaiModelApiName?: string };
+};
+
+type ImageOutput = { url?: string; b64_json?: string; revised_prompt?: string };
 
 async function req(url: string, apiKey: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers || {});
@@ -49,6 +58,19 @@ export default function App() {
   );
   const [modelImportAccountId, setModelImportAccountId] = useState("");
   const [keyInput, setKeyInput] = useState(localStorage.getItem("proxy_api_key") || "test-key");
+  const [models, setModels] = useState<ModelItem[]>([]);
+  const [prompt, setPrompt] = useState("A cinematic night street in Shanghai, rain reflections, ultra detailed.");
+  const [imageModel, setImageModel] = useState("claude-sonnet-4-6");
+  const [size, setSize] = useState("1024x1024");
+  const [quality, setQuality] = useState("hd");
+  const [style, setStyle] = useState("vivid");
+  const [responseFormat, setResponseFormat] = useState("url");
+  const [n, setN] = useState(1);
+  const [imageAccountId, setImageAccountId] = useState("");
+  const [imageChatId, setImageChatId] = useState("");
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState("");
+  const [imageOutputs, setImageOutputs] = useState<ImageOutput[]>([]);
 
   const enabledCount = useMemo(() => accounts.filter((a) => a.enabled).length, [accounts]);
 
@@ -65,6 +87,18 @@ export default function App() {
       setLoading(false);
     }
   }, [keyInput]);
+
+  const loadModels = useCallback(async () => {
+    try {
+      const q = imageAccountId.trim() ? `?accountId=${encodeURIComponent(imageAccountId.trim())}` : "";
+      const data = await req(`/v1/models${q}`, keyInput);
+      const list = Array.isArray(data.data) ? data.data : [];
+      setModels(list);
+      if (list.length > 0) setImageModel(list[0].id);
+    } catch {
+      setModels([]);
+    }
+  }, [imageAccountId, keyInput]);
 
   async function doImport() {
     try {
@@ -83,6 +117,7 @@ export default function App() {
       if (modelImportAccountId.trim()) body.accountId = modelImportAccountId.trim();
       await req("/v1/models/import", keyInput, { method: "POST", body: JSON.stringify(body) });
       await loadAccounts();
+      await loadModels();
     } catch (e: any) {
       setError(e.message || "model import failed");
     }
@@ -98,17 +133,45 @@ export default function App() {
     await loadAccounts();
   }
 
+  async function generateImage() {
+    setImageLoading(true);
+    setImageError("");
+    setImageOutputs([]);
+    try {
+      const body: Record<string, any> = {
+        model: imageModel,
+        prompt,
+        size,
+        quality,
+        style,
+        n,
+        response_format: responseFormat,
+      };
+      if (imageAccountId.trim()) body.accountId = imageAccountId.trim();
+      if (imageChatId.trim()) body.chatId = imageChatId.trim();
+      const data = await req("/v1/images/generations", keyInput, { method: "POST", body: JSON.stringify(body) });
+      setImageOutputs(Array.isArray(data.data) ? data.data : []);
+    } catch (e: any) {
+      setImageError(e.message || "image generation failed");
+    } finally {
+      setImageLoading(false);
+    }
+  }
+
   useEffect(() => {
     loadAccounts();
   }, [loadAccounts]);
 
-  return (
-    <main className="portal-shell mx-auto max-w-6xl px-5 py-8 md:px-8 md:py-12">
-      <section className="panel reveal overflow-hidden rounded-[2rem] p-8 md:p-10">
-        <p className="text-xs uppercase tracking-[0.35em] text-slate-400">CTF Control Portal</p>
-        <h1 className="hero-title mt-3 text-5xl text-white md:text-7xl">Multi-Account Proxy Ops</h1>
-        <p className="mt-5 max-w-3xl text-base text-slate-300 md:text-lg">A tactical dark-mode command layer for Magai relay. Import credentials, operate round-robin scheduling, and keep every account visible under pressure.</p>
+  useEffect(() => {
+    loadModels();
+  }, [loadModels]);
 
+  return (
+    <main className="portal-shell mx-auto max-w-7xl px-5 py-8 md:px-8 md:py-12">
+      <section className="panel reveal overflow-hidden rounded-[2rem] p-8 md:p-10">
+        <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Magai Proxy Control</p>
+        <h1 className="hero-title mt-3 text-5xl text-white md:text-7xl">Text + Image Ops Deck</h1>
+        <p className="mt-5 max-w-3xl text-base text-slate-300 md:text-lg">Unify account rotation, model ingestion, and image generation in one operational board with direct OpenAI-compatible calls.</p>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <div className="inset-line lift rounded-2xl p-4">
             <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Total Accounts</p>
@@ -125,70 +188,82 @@ export default function App() {
         </div>
       </section>
 
-      <section className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="panel reveal rounded-3xl p-6">
-          <h2 className="text-2xl text-white">Proxy API Key</h2>
-          <p className="mt-1 text-sm text-slate-400">Auth is applied as Bearer token for all management requests.</p>
-          <input
-            className="mt-4 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-emerald-300/60"
-            value={keyInput}
-            onChange={(e) => setKeyInput(e.target.value)}
-            placeholder="PROXY_API_KEY"
-          />
-          <button
-            className="mt-4 rounded-xl border border-emerald-300/50 bg-emerald-300/90 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200"
-            onClick={() => {
-              localStorage.setItem("proxy_api_key", keyInput);
-              loadAccounts();
-            }}
-          >
-            Save & Refresh
-          </button>
+      <section className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="space-y-6">
+          <div className="panel reveal rounded-3xl p-6">
+            <h2 className="text-2xl text-white">Proxy API Key</h2>
+            <input className="mt-4 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-emerald-300/60" value={keyInput} onChange={(e) => setKeyInput(e.target.value)} placeholder="PROXY_API_KEY" />
+            <button className="mt-4 rounded-xl border border-emerald-300/50 bg-emerald-300/90 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200" onClick={() => { localStorage.setItem("proxy_api_key", keyInput); loadAccounts(); loadModels(); }}>
+              Save & Refresh
+            </button>
+          </div>
+
+          <div className="panel reveal rounded-3xl p-6">
+            <h2 className="text-2xl text-white">Import Credentials</h2>
+            <textarea className="mt-4 h-40 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 p-4 font-mono text-xs text-slate-100 outline-none transition focus:border-blue-300/60" value={jsonText} onChange={(e) => setJsonText(e.target.value)} />
+            <button className="mt-4 rounded-xl border border-blue-300/50 bg-blue-400/90 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-blue-300" onClick={doImport}>Import Now</button>
+          </div>
+
+          <div className="panel reveal rounded-3xl p-6">
+            <h2 className="text-2xl text-white">Import Known Models</h2>
+            <input className="mt-4 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 font-mono text-xs text-slate-100 outline-none transition focus:border-fuchsia-300/60" value={modelImportAccountId} onChange={(e) => setModelImportAccountId(e.target.value)} placeholder="Optional accountId (blank = current round-robin account)" />
+            <textarea className="mt-4 h-44 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 p-4 font-mono text-xs text-slate-100 outline-none transition focus:border-fuchsia-300/60" value={modelsJsonText} onChange={(e) => setModelsJsonText(e.target.value)} />
+            <button className="mt-4 rounded-xl border border-fuchsia-300/50 bg-fuchsia-300/90 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-fuchsia-200" onClick={doImportModels}>Import Models</button>
+          </div>
         </div>
 
         <div className="panel reveal rounded-3xl p-6">
-          <h2 className="text-2xl text-white">Import Credentials</h2>
-          <p className="mt-1 text-sm text-slate-400">Paste exported accounts JSON and ingest into the rotation pool.</p>
-          <textarea
-            className="mt-4 h-48 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 p-4 font-mono text-xs text-slate-100 outline-none transition focus:border-blue-300/60"
-            value={jsonText}
-            onChange={(e) => setJsonText(e.target.value)}
-          />
-          <button className="mt-4 rounded-xl border border-blue-300/50 bg-blue-400/90 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-blue-300" onClick={doImport}>
-            Import Now
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-2xl text-white">Image Studio</h2>
+            <button className="rounded-xl border border-slate-500/60 px-3 py-2 text-xs uppercase tracking-[0.16em] text-slate-200 transition hover:border-slate-300" onClick={loadModels}>Refresh Models</button>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <select className="rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none" value={imageModel} onChange={(e) => setImageModel(e.target.value)}>
+              {(models.length > 0 ? models : [{ id: "claude-sonnet-4-6", object: "model", owned_by: "local" }]).map((m) => <option key={m.id} value={m.id}>{m.meta?.magaiModelName || m.id}</option>)}
+            </select>
+            <select className="rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none" value={size} onChange={(e) => setSize(e.target.value)}>
+              <option value="1024x1024">1024x1024</option><option value="1024x1536">1024x1536</option><option value="1536x1024">1536x1024</option><option value="1024x1792">1024x1792</option><option value="1792x1024">1792x1024</option>
+            </select>
+            <select className="rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none" value={quality} onChange={(e) => setQuality(e.target.value)}>
+              <option value="standard">standard</option><option value="hd">hd</option>
+            </select>
+            <select className="rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none" value={style} onChange={(e) => setStyle(e.target.value)}>
+              <option value="vivid">vivid</option><option value="natural">natural</option>
+            </select>
+            <select className="rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none" value={responseFormat} onChange={(e) => setResponseFormat(e.target.value)}>
+              <option value="url">url</option><option value="b64_json">b64_json</option>
+            </select>
+            <input className="rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none" type="number" min={1} max={4} value={n} onChange={(e) => setN(Math.max(1, Math.min(4, Number(e.target.value) || 1)))} />
+            <input className="rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 font-mono text-xs text-slate-100 outline-none md:col-span-2" value={imageAccountId} onChange={(e) => setImageAccountId(e.target.value)} placeholder="accountId (optional)" />
+            <input className="rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 font-mono text-xs text-slate-100 outline-none md:col-span-2" value={imageChatId} onChange={(e) => setImageChatId(e.target.value)} placeholder="chatId (optional)" />
+          </div>
+          <textarea className="mt-3 h-24 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 p-4 text-sm text-slate-100 outline-none" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+          <button className="mt-4 rounded-xl border border-amber-300/50 bg-amber-300/90 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200" onClick={generateImage} disabled={imageLoading}>
+            {imageLoading ? "Generating..." : "Generate Image"}
           </button>
+          {imageError ? <p className="mt-3 rounded-lg border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{imageError}</p> : null}
+          {imageOutputs.length > 0 ? (
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {imageOutputs.map((it, idx) => {
+                const src = it.url || (it.b64_json ? `data:image/png;base64,${it.b64_json}` : "");
+                return (
+                  <article key={`${idx}-${src.slice(0, 40)}`} className="inset-line rounded-2xl p-3">
+                    {src ? <img src={src} alt={`generated-${idx + 1}`} className="h-auto w-full rounded-xl object-cover" /> : <p className="text-xs text-slate-400">No renderable image payload.</p>}
+                    <p className="mt-2 text-xs text-slate-300">{it.revised_prompt || prompt}</p>
+                  </article>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
-      </section>
-
-      <section className="panel reveal mt-6 rounded-3xl p-6">
-        <h2 className="text-2xl text-white">Import Known Models</h2>
-        <p className="mt-1 text-sm text-slate-400">Paste [{`{ id, name, apiName }`}] extracted from browser history and import as fixed model catalog.</p>
-        <input
-          className="mt-4 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 font-mono text-xs text-slate-100 outline-none transition focus:border-fuchsia-300/60"
-          value={modelImportAccountId}
-          onChange={(e) => setModelImportAccountId(e.target.value)}
-          placeholder="Optional accountId (blank = current round-robin account)"
-        />
-        <textarea
-          className="mt-4 h-56 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 p-4 font-mono text-xs text-slate-100 outline-none transition focus:border-fuchsia-300/60"
-          value={modelsJsonText}
-          onChange={(e) => setModelsJsonText(e.target.value)}
-        />
-        <button className="mt-4 rounded-xl border border-fuchsia-300/50 bg-fuchsia-300/90 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-fuchsia-200" onClick={doImportModels}>
-          Import Models
-        </button>
       </section>
 
       <section className="panel reveal mt-6 rounded-3xl p-6">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-2xl text-white">Account Pool</h2>
-          <button className="rounded-xl border border-slate-500/60 px-3 py-2 text-xs uppercase tracking-[0.16em] text-slate-200 transition hover:border-slate-300" onClick={loadAccounts}>
-            {loading ? "Loading" : "Refresh"}
-          </button>
+          <button className="rounded-xl border border-slate-500/60 px-3 py-2 text-xs uppercase tracking-[0.16em] text-slate-200 transition hover:border-slate-300" onClick={loadAccounts}>{loading ? "Loading" : "Refresh"}</button>
         </div>
-
         {error ? <p className="mt-3 rounded-lg border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{error}</p> : null}
-
         <div className="mt-4 grid gap-3">
           {accounts.map((a) => (
             <article key={a.id} className="inset-line lift rounded-2xl p-4">
@@ -199,17 +274,11 @@ export default function App() {
                   <p className="mt-2 text-xs uppercase tracking-[0.14em] text-slate-400">last used {ago(a.lastUsedAt)}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button className="rounded-lg border border-slate-500/50 px-3 py-1 text-xs text-slate-100 transition hover:border-emerald-300/60" onClick={() => toggle(a.id, !a.enabled)}>
-                    {a.enabled ? "Disable" : "Enable"}
-                  </button>
-                  <button className="rounded-lg border border-rose-400/50 px-3 py-1 text-xs text-rose-200 transition hover:bg-rose-500/10" onClick={() => remove(a.id)}>
-                    Delete
-                  </button>
+                  <button className="rounded-lg border border-slate-500/50 px-3 py-1 text-xs text-slate-100 transition hover:border-emerald-300/60" onClick={() => toggle(a.id, !a.enabled)}>{a.enabled ? "Disable" : "Enable"}</button>
+                  <button className="rounded-lg border border-rose-400/50 px-3 py-1 text-xs text-rose-200 transition hover:bg-rose-500/10" onClick={() => remove(a.id)}>Delete</button>
                 </div>
               </div>
-              <p className="mt-3 text-xs text-slate-300">
-                cookie: {a.hasCookie ? "ok" : "missing"} | refresh: {a.hasRefreshToken ? "ok" : "missing"} | models: {a.discovery.modelCount} | chatId: {a.discovery.chatId || "-"}
-              </p>
+              <p className="mt-3 text-xs text-slate-300">cookie: {a.hasCookie ? "ok" : "missing"} | refresh: {a.hasRefreshToken ? "ok" : "missing"} | models: {a.discovery.modelCount} | chatId: {a.discovery.chatId || "-"}</p>
               <p className="mt-1 text-xs text-slate-400">lastError: {a.lastError || "none"}</p>
             </article>
           ))}

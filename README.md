@@ -5,6 +5,7 @@
 ## 1. 项目能力
 
 - OpenAI 兼容：`POST /v1/chat/completions`
+- OpenAI 图片兼容：`POST /v1/images/generations`
 - Anthropic 兼容：`POST /anthropic/v1/messages`、`POST /v1/messages`
 - 自动链路：`refresh_token -> Supabase access_token -> next-action short JWT -> /api/chat`
 - 自动发现：`userId`、`chatId`
@@ -67,6 +68,8 @@ PROXY_API_KEY=test-key
 MAGAI_BASE_URL=https://beta.magai.co
 MAGAI_COOKIE=<cookie>
 MAGAI_NEXT_ACTION=40cd8b2ec4704e0f3c267bd98f93b0f9806e121b77
+MAGAI_IMAGE_ACTION=7fa3b9255f2ff4eef604b8c9a7bbc1b37ceb871dae
+MAGAI_IMAGE_PRESET=v1 Pro
 
 SUPABASE_URL=https://bkatrpghmzbpjhegvkev.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
@@ -185,6 +188,28 @@ curl http://127.0.0.1:8787/anthropic/v1/messages \
   }'
 ```
 
+### 6.7 OpenAI images
+
+```bash
+curl http://127.0.0.1:8787/v1/images/generations \
+  -H "Authorization: Bearer test-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model":"claude-sonnet-4-6",
+    "prompt":"a tiny robot reading a book",
+    "size":"1024x1024",
+    "quality":"hd",
+    "style":"vivid",
+    "n":1,
+    "response_format":"url"
+  }'
+```
+
+说明：
+- `size` 支持：`1024x1024`、`1024x1536`、`1536x1024`、`1024x1792`、`1792x1024`
+- `response_format` 支持：`url`、`b64_json`
+- 可选传入：`accountId`、`chatId`
+
 ---
 
 ## 7. 账号池管理 API
@@ -220,6 +245,7 @@ curl http://127.0.0.1:8787/anthropic/v1/messages \
 3. 粘贴导出的账号 JSON
 4. 点击导入，查看账号池状态与轮询信息
 5. 在 “Import Known Models” 区域粘贴模型 JSON 并导入
+6. 在 “Image Studio” 区域配置 `model / size / quality / style / n / response_format` 并点击 `Generate Image`
 
 ---
 
