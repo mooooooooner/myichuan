@@ -6,6 +6,7 @@ dist/
 !apps/server/.env.example
 apps/server/.env
 apps/server/accounts.json
+apps/server/model-catalog.json
 apps/server/registered.json
 *.log
 # transient test outputs from scripts/test-token-*.ps1

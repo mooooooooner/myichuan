@@ -45,6 +45,7 @@ const DEFAULT_MAGAI_CHAT_SNAPSHOT_ACTION = process.env.MAGAI_CHAT_SNAPSHOT_ACTIO
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const SERVER_DIR = path.resolve(SCRIPT_DIR, "..");
 const ACCOUNTS_FILE = process.env.MAGAI_ACCOUNTS_FILE || path.resolve(SERVER_DIR, "accounts.json");
+const MODEL_CATALOG_FILE = process.env.MAGAI_MODEL_CATALOG_FILE || path.resolve(SERVER_DIR, "model-catalog.json");
 const FALLBACK_ROUTER_STATE_TREE = `["",{"children":[["path","chat","oc",null],{"children":["__PAGE__",{},null,null,0]},null,null,0]},null,null,16]`;
 
 const startAt = Date.now();
@@ -96,6 +97,7 @@ const stats: Record<"openai" | "anthropic", Stat> = {
 };
 
 let accounts: Account[] = [];
+let modelCatalog: DiscoveredModel[] = [];
 
 function uuid() { return crypto.randomUUID(); }
 function countWords(s: string) { return (s.trim().match(/\S+/g) || []).length; }
@@ -203,7 +205,6 @@ function persistAccounts() {
       magaiDefaultModelId: a.magaiDefaultModelId || "",
       magaiDefaultModelName: a.magaiDefaultModelName || "",
       magaiDefaultModelApiName: a.magaiDefaultModelApiName || "",
-      magaiModelCatalogJson: a.magaiModelCatalogJson || "",
       magaiAlwaysNewChat: !!a.magaiAlwaysNewChat,
       magaiImageAction: a.magaiImageAction || "",
       magaiImagePreset: a.magaiImagePreset || "",
@@ -221,6 +222,24 @@ function persistAccounts() {
   });
 }
 
+function persistModelCatalog() {
+  const serializable = getKnownModels().map((m) => ({ id: m.id, name: m.name, apiName: m.apiName || "" }));
+  persistQueue = persistQueue.then(async () => {
+    const dir = path.dirname(MODEL_CATALOG_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const tmp = `${MODEL_CATALOG_FILE}.tmp.${process.pid}.${Date.now()}`;
+    try {
+      await fs.promises.writeFile(tmp, JSON.stringify(serializable, null, 2), "utf8");
+      await fs.promises.rename(tmp, MODEL_CATALOG_FILE);
+    } catch (e) {
+      try { await fs.promises.unlink(tmp); } catch {}
+      throw e;
+    }
+  }).catch((e) => {
+    console.error("[persistModelCatalog] failed:", (e as Error)?.message || e);
+  });
+}
+
 function bootstrapAccounts() {
   const disk = loadAccountsFromDisk();
   if (disk.length > 0) {
@@ -232,6 +251,30 @@ function bootstrapAccounts() {
   if (fallbackCookie && fallbackRefresh) {
     accounts = [makeAccount({ id: "default", name: "default", enabled: true, magaiCookie: fallbackCookie, supabaseRefreshToken: fallbackRefresh })];
   }
+}
+
+function bootstrapModelCatalog() {
+  // Priority: dedicated catalog file -> legacy env var -> legacy per-account fields -> default model.
+  const fromFile = loadModelCatalogFromDisk();
+  if (fromFile.length > 0) {
+    modelCatalog = fromFile;
+    return;
+  }
+
+  const merged = new Map<string, DiscoveredModel>();
+  for (const m of parseModelCatalogJson(DEFAULT_MAGAI_MODEL_CATALOG_JSON)) upsertModel(merged, m.id, m.name, m.apiName);
+  for (const a of accounts) {
+    for (const m of parseModelCatalogJson(a.magaiModelCatalogJson || "")) upsertModel(merged, m.id, m.name, m.apiName);
+    if (a.magaiDefaultModelId) {
+      const name = a.magaiDefaultModelName || DEFAULT_MAGAI_DEFAULT_MODEL_NAME;
+      upsertModel(merged, a.magaiDefaultModelId, name, a.magaiDefaultModelApiName || undefined);
+    }
+  }
+  if (merged.size === 0 && DEFAULT_MAGAI_DEFAULT_MODEL_ID) {
+    upsertModel(merged, DEFAULT_MAGAI_DEFAULT_MODEL_ID, DEFAULT_MAGAI_DEFAULT_MODEL_NAME, DEFAULT_MAGAI_DEFAULT_MODEL_API_NAME || undefined);
+  }
+  modelCatalog = Array.from(merged.values());
+  if (modelCatalog.length > 0) persistModelCatalog();
 }
 
 function auth(req: Request, res: Response, next: NextFunction) {
@@ -272,10 +315,10 @@ function upsertModel(map: Map<string, DiscoveredModel>, id: string, name?: strin
   if (apiName && !prev.apiName) prev.apiName = apiName;
 }
 
-function loadConfiguredModelCatalog(account: Account) {
-  if (!account.magaiModelCatalogJson) return [] as DiscoveredModel[];
+function parseModelCatalogJson(raw: string) {
+  if (!raw) return [] as DiscoveredModel[];
   try {
-    const parsed = JSON.parse(account.magaiModelCatalogJson) as any[];
+    const parsed = JSON.parse(raw) as any[];
     if (!Array.isArray(parsed)) return [];
     const out: DiscoveredModel[] = [];
     for (const item of parsed) {
@@ -291,14 +334,30 @@ function loadConfiguredModelCatalog(account: Account) {
   }
 }
 
-function getKnownModels(account: Account) {
+function normalizeModelCatalog(models: DiscoveredModel[]) {
   const byId = new Map<string, DiscoveredModel>();
-  for (const m of loadConfiguredModelCatalog(account)) upsertModel(byId, m.id, m.name, m.apiName);
-  if (byId.size === 0 && account.magaiDefaultModelId) {
-    const name = account.magaiDefaultModelName || DEFAULT_MAGAI_DEFAULT_MODEL_NAME;
-    upsertModel(byId, account.magaiDefaultModelId, name, account.magaiDefaultModelApiName || undefined);
-  }
+  for (const m of models) upsertModel(byId, m.id, m.name, m.apiName);
   return Array.from(byId.values());
+}
+
+function loadModelCatalogFromDisk() {
+  if (!fs.existsSync(MODEL_CATALOG_FILE)) return [] as DiscoveredModel[];
+  try {
+    const parsed = JSON.parse(fs.readFileSync(MODEL_CATALOG_FILE, "utf8")) as any;
+    if (!Array.isArray(parsed)) return [];
+    return normalizeModelCatalog(parsed.map((m: any) => ({
+      id: String(m?.id || "").trim(),
+      name: String(m?.name || "").trim(),
+      apiName: String(m?.apiName || m?.model || "").trim(),
+      alias: "",
+    })));
+  } catch {
+    return [];
+  }
+}
+
+function getKnownModels() {
+  return normalizeModelCatalog(modelCatalog);
 }
 
 async function fetchJsonArray(url: string, headers: Record<string, string>) {
@@ -500,12 +559,12 @@ async function refreshDiscovery(account: Account, accessToken: string) {
   }
 
   if (!account.discovery.chatId) account.discovery.chatId = extractChatId(tokenAction.text);
-  account.discovery.models = getKnownModels(account);
+  account.discovery.models = getKnownModels();
   account.discovery.ts = now;
 }
 
-function requireDiscoveredModel(account: Account, inputModel: string) {
-  const known = getKnownModels(account);
+function requireDiscoveredModel(inputModel: string) {
+  const known = getKnownModels();
   if (known.length === 0) throw new Error("No known models configured. Import models first.");
   const needle = inputModel.toLowerCase();
   const hit =
@@ -586,7 +645,7 @@ async function getMagaiShortJwt(account: Account) {
 
 async function requestMagaiChat(account: Account, input: { model: string; messages: any[]; chatId?: string; newChat?: boolean }) {
   const token = await getMagaiShortJwt(account);
-  const resolvedModel = requireDiscoveredModel(account, input.model);
+  const resolvedModel = requireDiscoveredModel(input.model);
   let chatId = input.chatId || account.discovery.chatId || account.magaiDefaultChatId;
   if (!input.chatId && (input.newChat || account.magaiAlwaysNewChat)) {
     try {
@@ -722,14 +781,20 @@ app.get("/v1/accounts", auth, (_req, res) => res.json({ object: "list", data: ac
 app.post("/v1/accounts/import", auth, (req, res) => {
   const raw = req.body?.accounts;
   if (!Array.isArray(raw) || raw.length === 0) return res.status(400).json({ error: { message: "accounts[] required" } });
+  const mergedModels = new Map<string, DiscoveredModel>();
+  for (const m of getKnownModels()) upsertModel(mergedModels, m.id, m.name, m.apiName);
   for (const item of raw) {
     const account = makeAccount(item || {});
     if (!account.magaiCookie || !account.supabaseRefreshToken) continue;
+    for (const m of parseModelCatalogJson(account.magaiModelCatalogJson || "")) upsertModel(mergedModels, m.id, m.name, m.apiName);
     const idx = accounts.findIndex((a) => a.id === account.id);
     if (idx >= 0) accounts[idx] = { ...accounts[idx], ...account, discovery: { models: [], ts: 0 }, cachedMagaiJwt: "", cachedMagaiJwtExp: 0, cachedSupabaseAccessToken: "", cachedSupabaseAccessExp: 0, currentRefreshToken: account.supabaseRefreshToken };
     else accounts.push(account);
   }
+  modelCatalog = Array.from(mergedModels.values());
+  for (const a of accounts) a.discovery.models = getKnownModels();
   persistAccounts();
+  persistModelCatalog();
   return res.json({ ok: true, count: accounts.length, data: accounts.map(scrubAccount) });
 });
 app.patch("/v1/accounts/:id", auth, (req, res) => {
@@ -750,7 +815,6 @@ app.delete("/v1/accounts/:id", auth, (req, res) => {
 });
 
 app.post("/v1/models/import", auth, (req, res) => {
-  const account = chooseAccount(String(req.body?.accountId || ""));
   const models = req.body?.models;
   if (!Array.isArray(models) || models.length === 0) {
     return res.status(400).json({ error: { message: "models[] required" } });
@@ -765,21 +829,24 @@ app.post("/v1/models/import", auth, (req, res) => {
   if (normalized.length === 0) {
     return res.status(400).json({ error: { message: "valid models[] required (id + name)" } });
   }
-  account.magaiModelCatalogJson = JSON.stringify(normalized);
-  account.discovery.models = getKnownModels(account);
-  account.discovery.ts = Date.now();
-  persistAccounts();
-  return res.json({ ok: true, accountId: account.id, count: account.discovery.models.length, data: account.discovery.models });
+  const merged = new Map<string, DiscoveredModel>();
+  for (const m of getKnownModels()) upsertModel(merged, m.id, m.name, m.apiName);
+  for (const m of normalized) upsertModel(merged, m.id, m.name, m.apiName || undefined);
+  modelCatalog = Array.from(merged.values());
+  for (const a of accounts) {
+    a.discovery.models = getKnownModels();
+    a.discovery.ts = Date.now();
+  }
+  persistModelCatalog();
+  return res.json({ ok: true, count: modelCatalog.length, data: getKnownModels() });
 });
 
-app.get("/v1/models", auth, async (req, res) => {
+app.get("/v1/models", auth, async (_req, res) => {
   try {
-    const account = chooseAccount(String(req.query.accountId || ""));
-    account.discovery.models = getKnownModels(account);
+    const models = getKnownModels();
     return res.json({
       object: "list",
-      accountId: account.id,
-      data: account.discovery.models.map((m) => ({ id: m.alias, object: "model", owned_by: "magai-proxy", meta: { magaiModelId: m.id, magaiModelName: m.name, magaiModelApiName: m.apiName || "" } })),
+      data: models.map((m) => ({ id: m.alias, object: "model", owned_by: "magai-proxy", meta: { magaiModelId: m.id, magaiModelName: m.name, magaiModelApiName: m.apiName || "" } })),
     });
   } catch (e: any) {
     return res.status(500).json({ error: { message: e?.message || "models error" } });
@@ -981,5 +1048,6 @@ function startHeartbeat() {
 }
 
 bootstrapAccounts();
+bootstrapModelCatalog();
 startHeartbeat();
-app.listen(PORT, HOST, () => console.log(`magai proxy listening on ${HOST}:${PORT}; accounts=${accounts.length}; file=${ACCOUNTS_FILE}; env=${loadedEnvPath || "none"}`));
+app.listen(PORT, HOST, () => console.log(`magai proxy listening on ${HOST}:${PORT}; accounts=${accounts.length}; accountsFile=${ACCOUNTS_FILE}; modelCatalogFile=${MODEL_CATALOG_FILE}; env=${loadedEnvPath || "none"}`));
