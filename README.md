@@ -34,6 +34,8 @@ bash scripts/setup.sh
 5. 注入默认模型清单（Claude Sonnet 4.6）
 6. 询问是否立刻启动 server（:8787）+ web portal（:5174）
 
+**之后需要自己手动导入一份cookie，以及手动导入你想要的模型映射**！！！
+
 启动后浏览器打开 `http://127.0.0.1:5174`，输入刚刚生成的 `PROXY_API_KEY` 就能用。
 
 非交互模式（CI / 脚本里调）：
