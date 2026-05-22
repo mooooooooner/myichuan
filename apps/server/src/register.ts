@@ -58,13 +58,36 @@ function rand(len = 8) {
   for (let i = 0; i < len; i++) s += alpha[Math.floor(Math.random() * alpha.length)];
   return s;
 }
+function randAlphaNum(len = 8) {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let s = "";
+  for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
 function randDigits(len = 4) {
   let s = "";
   for (let i = 0; i < len; i++) s += Math.floor(Math.random() * 10);
   return s;
 }
-function genEmail(domain = "outlook.com", prefix = "frank") {
-  return `${prefix}${randDigits(4)}${rand(3)}@${domain}`;
+function randBetween(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function genHumanName() {
+  const firstNames = [
+    "liam", "olivia", "noah", "emma", "elijah", "ava", "mateo", "mia", "lucas", "sofia",
+    "leo", "isabella", "ethan", "amelia", "aaron", "harper", "owen", "evelyn", "jack", "chloe",
+  ];
+  const lastNames = [
+    "smith", "johnson", "williams", "brown", "jones", "miller", "davis", "garcia", "rodriguez", "wilson",
+    "martinez", "anderson", "taylor", "thomas", "moore", "jackson", "white", "harris", "martin", "clark",
+  ];
+  const first = firstNames[Math.floor(Math.random() * firstNames.length)];
+  const last = lastNames[Math.floor(Math.random() * lastNames.length)];
+  return `${first}${last}`;
+}
+function genEmail(domain = "outlook.com") {
+  const suffixLen = randBetween(4, 8);
+  return `${genHumanName()}${randAlphaNum(suffixLen)}@${domain}`;
 }
 function genPassword() {
   return `${rand(4)}${randDigits(3)}`;
@@ -326,16 +349,17 @@ async function main() {
   const concurrency = Math.max(1, Math.min(8, Number(args.concurrency || args.c || 1)));
   const delayMs = Math.max(0, Number(args.delay || 800));
   const domain = args.domain || "outlook.com";
-  const prefix = args.prefix || "frank";
+  const prefix = args.prefix || "";
   const fixedEmail = args.email;
   const fixedPassword = args.password;
   const dryRun = args["dry-run"] === "true";
   const exportPath = args.export || "";
   const skipMerge = args["skip-merge"] === "true";
 
-  console.log(`[register] count=${count} concurrency=${concurrency} domain=${domain} prefix=${prefix}`);
+  console.log(`[register] count=${count} concurrency=${concurrency} domain=${domain} mode=random-name+random-suffix`);
+  if (prefix) console.log(`[register] --prefix is ignored in current mode`);
   if (dryRun) {
-    console.log(`[register] dry-run sample:`, { email: genEmail(domain, prefix), password: genPassword() });
+    console.log(`[register] dry-run sample:`, { email: genEmail(domain), password: genPassword() });
     return;
   }
 
@@ -345,7 +369,7 @@ async function main() {
     while (true) {
       const idx = nextIdx++;
       if (idx >= count) return;
-      const email = fixedEmail && count === 1 ? fixedEmail : genEmail(domain, prefix);
+      const email = fixedEmail && count === 1 ? fixedEmail : genEmail(domain);
       const password = fixedPassword && count === 1 ? fixedPassword : genPassword();
       const r = await registerOne(email, password);
       results.push(r);

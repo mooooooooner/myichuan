@@ -9,7 +9,7 @@
 param(
     [int]$RegisterCount = -1,         # -1 means "ask interactively"
     [int]$Port = 8787,
-    [string]$ListenHost = "127.0.0.1",
+    [string]$ListenHost = "0.0.0.0",
     [string]$ProxyApiKey = "",        # empty means "generate or ask"
     [switch]$NoStart,                  # skip launching dev servers at the end
     [switch]$SkipRegister              # skip auto-registering accounts
@@ -71,7 +71,7 @@ $defaultEnvTemplate = @(
     "# Auto-generated fallback template by scripts/setup.ps1",
     "PROXY_API_KEY=change-me",
     "PORT=8787",
-    "HOST=127.0.0.1",
+    "HOST=0.0.0.0",
     "MAGAI_BASE_URL=https://beta.magai.co",
     "SUPABASE_URL=https://bkatrpghmzbpjhegvkev.supabase.co",
     "SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx",
@@ -210,30 +210,46 @@ if (Test-Path (Join-Path $repoRoot "apps\server\registered.json")) {
 # ---------- import a default model so /v1/models is non-empty ----------
 Section "5/6  Seed default model catalog"
 
-$accountsExist = $false
+$modelCatalogFile = $envMap["MAGAI_MODEL_CATALOG_FILE"]
+if (-not $modelCatalogFile) { $modelCatalogFile = "apps/server/model-catalog.json" }
+$modelCatalogPath = Join-Path $repoRoot $modelCatalogFile
+
+$hasAccounts = $false
 if (Test-Path $accountsFile) {
-    $arr = @()
-    try { $arr = @(Get-Content -Raw $accountsFile | ConvertFrom-Json) } catch {}
-    if ($arr.Count -gt 0) {
-        $accountsExist = $true
-        $needSeed = $true
-        foreach ($a in $arr) {
-            if ($a.magaiModelCatalogJson) { $needSeed = $false; break }
-            if ($a.magaiDefaultModelId)   { $needSeed = $false; break }
-        }
-        if ($needSeed) {
-            $catalogJson = '[{"id":"16c133bc-bab9-41af-b3d4-08dd9157dbca","name":"Claude Sonnet 4.6","apiName":"anthropic/claude-4.6-sonnet-20260217"}]'
-            foreach ($a in $arr) { $a | Add-Member -NotePropertyName magaiModelCatalogJson -NotePropertyValue $catalogJson -Force }
-            $tmp = "$accountsFile.tmp.$([System.Diagnostics.Process]::GetCurrentProcess().Id).$(Get-Random)"
-            ($arr | ConvertTo-Json -Depth 10) | Set-Content -Encoding UTF8 -Path $tmp
-            Move-Item -Force $tmp $accountsFile
-            Ok "Seeded Claude Sonnet 4.6 into all accounts"
-        } else {
-            Ok "Model catalog already configured"
-        }
+    try {
+        $arr = @(Get-Content -Raw $accountsFile | ConvertFrom-Json)
+        if ($arr.Count -gt 0) { $hasAccounts = $true }
+    } catch {}
+}
+
+if (-not $hasAccounts) {
+    Warn "No accounts present; skipping model seed"
+} else {
+    $needSeed = $true
+    if (Test-Path $modelCatalogPath) {
+        try {
+            $existing = @(Get-Content -Raw $modelCatalogPath | ConvertFrom-Json)
+            if ($existing.Count -gt 0) { $needSeed = $false }
+        } catch {}
+    }
+    if ($needSeed) {
+        $dir = Split-Path -Parent $modelCatalogPath
+        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+        $seed = @(
+            @{
+                id = "16c133bc-bab9-41af-b3d4-08dd9157dbca"
+                name = "Claude Sonnet 4.6"
+                apiName = "anthropic/claude-4.6-sonnet-20260217"
+            }
+        )
+        $tmp = "$modelCatalogPath.tmp.$([System.Diagnostics.Process]::GetCurrentProcess().Id).$(Get-Random)"
+        ($seed | ConvertTo-Json -Depth 10) | Set-Content -Encoding UTF8 -Path $tmp
+        Move-Item -Force $tmp $modelCatalogPath
+        Ok "Seeded Claude Sonnet 4.6 into model catalog file"
+    } else {
+        Ok "Model catalog already configured"
     }
 }
-if (-not $accountsExist) { Warn "No accounts present; skipping model seed" }
 
 # ---------- summary + start ----------
 Section "6/6  Summary"

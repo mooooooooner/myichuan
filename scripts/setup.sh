@@ -6,7 +6,7 @@
 # Flags (all optional):
 #   --register-count N   Skip the prompt and register N accounts
 #   --port P             Override server port (default 8787)
-#   --host H             Override server listen host (default 127.0.0.1)
+#   --host H             Override server listen host (default 0.0.0.0)
 #   --proxy-key KEY      Pre-set PROXY_API_KEY
 #   --skip-register      Don't register any new accounts
 #   --no-start           Don't launch dev servers at the end
@@ -16,7 +16,7 @@ cd "$(dirname "$0")/.."
 
 REGISTER_COUNT=-1
 PORT=8787
-HOST="127.0.0.1"
+HOST="0.0.0.0"
 PROXY_KEY=""
 SKIP_REGISTER=0
 NO_START=0
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --register-count) REGISTER_COUNT="${2:-0}"; shift 2 ;;
         --port)           PORT="${2:-8787}";        shift 2 ;;
-        --host)           HOST="${2:-127.0.0.1}";   shift 2 ;;
+        --host)           HOST="${2:-0.0.0.0}";     shift 2 ;;
         --proxy-key)      PROXY_KEY="${2:-}";        shift 2 ;;
         --skip-register)  SKIP_REGISTER=1;           shift   ;;
         --no-start)       NO_START=1;                shift   ;;
@@ -81,7 +81,7 @@ DEFAULT_ENV_TEMPLATE="$(cat <<'EOF'
 # Auto-generated fallback template by scripts/setup.sh
 PROXY_API_KEY=change-me
 PORT=8787
-HOST=127.0.0.1
+HOST=0.0.0.0
 MAGAI_BASE_URL=https://beta.magai.co
 SUPABASE_URL=https://bkatrpghmzbpjhegvkev.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
@@ -215,29 +215,39 @@ section "5/6  Seed default model catalog"
 if [[ -f "$ACCOUNTS_FILE" ]]; then
     NEED_SEED=$(node -e "
         const fs=require('fs');
+        const accountsFile=process.argv[1];
+        const modelCatalogFile=process.argv[2];
         try {
-            const a=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
+            const a=JSON.parse(fs.readFileSync(accountsFile,'utf8'));
             if (!Array.isArray(a)||a.length===0) {
                 process.stdout.write('skip');
                 process.exit(0);
             }
-            const ok = a.every(x => x.magaiModelCatalogJson || x.magaiDefaultModelId);
-            process.stdout.write(ok ? 'ok' : 'seed');
+            if (fs.existsSync(modelCatalogFile)) {
+                try {
+                    const m=JSON.parse(fs.readFileSync(modelCatalogFile,'utf8'));
+                    if (Array.isArray(m) && m.length>0) {
+                        process.stdout.write('ok');
+                        process.exit(0);
+                    }
+                } catch {}
+            }
+            process.stdout.write('seed');
         } catch { process.stdout.write('skip'); }
-    " "$ACCOUNTS_FILE")
+    " "$ACCOUNTS_FILE" "$(get_env MAGAI_MODEL_CATALOG_FILE)")
     case "$NEED_SEED" in
         seed)
             node -e "
                 const fs=require('fs');
-                const f=process.argv[1];
-                const a=JSON.parse(fs.readFileSync(f,'utf8'));
-                const cat='[{\"id\":\"16c133bc-bab9-41af-b3d4-08dd9157dbca\",\"name\":\"Claude Sonnet 4.6\",\"apiName\":\"anthropic/claude-4.6-sonnet-20260217\"}]';
-                for (const x of a) x.magaiModelCatalogJson = cat;
-                const tmp = f + '.tmp.' + process.pid + '.' + Date.now();
-                fs.writeFileSync(tmp, JSON.stringify(a, null, 2));
-                fs.renameSync(tmp, f);
-            " "$ACCOUNTS_FILE"
-            green "Seeded Claude Sonnet 4.6 into all accounts" ;;
+                const file=process.argv[1];
+                const dir=require('path').dirname(file);
+                if (!fs.existsSync(dir)) fs.mkdirSync(dir,{recursive:true});
+                const data=[{\"id\":\"16c133bc-bab9-41af-b3d4-08dd9157dbca\",\"name\":\"Claude Sonnet 4.6\",\"apiName\":\"anthropic/claude-4.6-sonnet-20260217\"}];
+                const tmp = file + '.tmp.' + process.pid + '.' + Date.now();
+                fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+                fs.renameSync(tmp, file);
+            " "$(get_env MAGAI_MODEL_CATALOG_FILE)"
+            green "Seeded Claude Sonnet 4.6 into model catalog file" ;;
         ok)   green "Model catalog already configured" ;;
         skip) yellow "No accounts present; skipping model seed" ;;
     esac

@@ -59,8 +59,9 @@ export default function App() {
       2,
     ),
   );
-  const [modelImportAccountId, setModelImportAccountId] = useState("");
-  const [keyInput, setKeyInput] = useState(localStorage.getItem("proxy_api_key") || "test-key");
+  const [keyInput, setKeyInput] = useState(localStorage.getItem("proxy_api_key") || "");
+  const [authed, setAuthed] = useState(false);
+  const [authError, setAuthError] = useState("");
   const [models, setModels] = useState<ModelItem[]>([]);
   const [prompt, setPrompt] = useState("A cinematic night street in Shanghai, rain reflections, ultra detailed.");
   const [imageModel, setImageModel] = useState("claude-sonnet-4-6");
@@ -78,6 +79,7 @@ export default function App() {
   const enabledCount = useMemo(() => accounts.filter((a) => a.enabled).length, [accounts]);
 
   const loadAccounts = useCallback(async () => {
+    if (!authed) return;
     setLoading(true);
     setError("");
     try {
@@ -89,19 +91,40 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [keyInput]);
+  }, [authed, keyInput]);
 
   const loadModels = useCallback(async () => {
+    if (!authed) return;
     try {
-      const q = imageAccountId.trim() ? `?accountId=${encodeURIComponent(imageAccountId.trim())}` : "";
-      const data = await req(`/v1/models${q}`, keyInput);
+      const data = await req("/v1/models", keyInput);
       const list = Array.isArray(data.data) ? data.data : [];
       setModels(list);
       if (list.length > 0) setImageModel(list[0].id);
     } catch {
       setModels([]);
     }
-  }, [imageAccountId, keyInput]);
+  }, [authed, keyInput]);
+
+  async function login() {
+    setAuthError("");
+    setError("");
+    const key = keyInput.trim();
+    if (!key) {
+      setAuthError("PROXY_API_KEY is required");
+      return;
+    }
+    try {
+      const data = await req("/v1/accounts", key);
+      localStorage.setItem("proxy_api_key", key);
+      setAuthed(true);
+      setAccounts(data.data || []);
+      setRrPointer(Number(data.rrPointer || 0));
+      await loadModels();
+    } catch (e: any) {
+      setAuthed(false);
+      setAuthError(e.message || "authentication failed");
+    }
+  }
 
   async function doImport() {
     try {
@@ -116,9 +139,7 @@ export default function App() {
   async function doImportModels() {
     try {
       const parsed = JSON.parse(modelsJsonText);
-      const body: Record<string, any> = { models: parsed };
-      if (modelImportAccountId.trim()) body.accountId = modelImportAccountId.trim();
-      await req("/v1/models/import", keyInput, { method: "POST", body: JSON.stringify(body) });
+      await req("/v1/models/import", keyInput, { method: "POST", body: JSON.stringify({ models: parsed }) });
       await loadAccounts();
       await loadModels();
     } catch (e: any) {
@@ -162,12 +183,18 @@ export default function App() {
   }
 
   useEffect(() => {
-    loadAccounts();
-  }, [loadAccounts]);
+    const saved = localStorage.getItem("proxy_api_key") || "";
+    if (saved) {
+      setKeyInput(saved);
+      setAuthed(true);
+    }
+  }, []);
 
   useEffect(() => {
+    if (!authed) return;
+    loadAccounts();
     loadModels();
-  }, [loadModels]);
+  }, [authed, loadAccounts, loadModels]);
 
   return (
     <main className="portal-shell mx-auto max-w-7xl px-5 py-8 md:px-8 md:py-12">
@@ -196,9 +223,10 @@ export default function App() {
           <div className="panel reveal rounded-3xl p-6">
             <h2 className="text-2xl text-white">Proxy API Key</h2>
             <input className="mt-4 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-emerald-300/60" value={keyInput} onChange={(e) => setKeyInput(e.target.value)} placeholder="PROXY_API_KEY" />
-            <button className="mt-4 rounded-xl border border-emerald-300/50 bg-emerald-300/90 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200" onClick={() => { localStorage.setItem("proxy_api_key", keyInput); loadAccounts(); loadModels(); }}>
-              Save & Refresh
+            <button className="mt-4 rounded-xl border border-emerald-300/50 bg-emerald-300/90 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200" onClick={login}>
+              {authed ? "Re-Login & Refresh" : "Login"}
             </button>
+            {authError ? <p className="mt-3 rounded-lg border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{authError}</p> : null}
           </div>
 
           <div className="panel reveal rounded-3xl p-6">
@@ -209,7 +237,6 @@ export default function App() {
 
           <div className="panel reveal rounded-3xl p-6">
             <h2 className="text-2xl text-white">Import Known Models</h2>
-            <input className="mt-4 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 px-4 py-3 font-mono text-xs text-slate-100 outline-none transition focus:border-fuchsia-300/60" value={modelImportAccountId} onChange={(e) => setModelImportAccountId(e.target.value)} placeholder="Optional accountId (blank = current round-robin account)" />
             <textarea className="mt-4 h-44 w-full rounded-xl border border-slate-600/50 bg-slate-950/70 p-4 font-mono text-xs text-slate-100 outline-none transition focus:border-fuchsia-300/60" value={modelsJsonText} onChange={(e) => setModelsJsonText(e.target.value)} />
             <button className="mt-4 rounded-xl border border-fuchsia-300/50 bg-fuchsia-300/90 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-fuchsia-200" onClick={doImportModels}>Import Models</button>
           </div>
