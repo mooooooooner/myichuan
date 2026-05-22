@@ -109,6 +109,10 @@ cp apps/server/.env.example apps/server/.env
 - `SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_REFRESH_TOKEN`
 
+> 重要：
+> - `MAGAI_COOKIE` 需要你自己从浏览器会话中获取并填入 `.env`，仓库不会提供可用 cookie。
+> - 模型 ID 映射（`id/name/apiName`）也需要你自己抓取并通过 `/v1/models/import` 或 Web 门户导入；不导入时 `/v1/models` 可能为空。
+
 推荐字段：
 
 ```env
@@ -190,7 +194,6 @@ curl http://127.0.0.1:8787/v1/models/import \
   -H "Authorization: Bearer test-key" \
   -H "Content-Type: application/json" \
   -d '{
-    "accountId":"default",
     "models":[
       {
         "id":"16c133bc-bab9-41af-b3d4-08dd9157dbca",
@@ -206,14 +209,7 @@ curl http://127.0.0.1:8787/v1/models/import \
   }'
 ```
 
-### 6.4 模型列表（指定账号）
-
-```bash
-curl "http://127.0.0.1:8787/v1/models?accountId=default" \
-  -H "Authorization: Bearer test-key"
-```
-
-### 6.5 OpenAI chat
+### 6.4 OpenAI chat
 
 ```bash
 curl http://127.0.0.1:8787/v1/chat/completions \
@@ -226,7 +222,7 @@ curl http://127.0.0.1:8787/v1/chat/completions \
   }'
 ```
 
-### 6.6 Anthropic chat
+### 6.5 Anthropic chat
 
 ```bash
 curl http://127.0.0.1:8787/anthropic/v1/messages \
@@ -239,7 +235,7 @@ curl http://127.0.0.1:8787/anthropic/v1/messages \
   }'
 ```
 
-### 6.7 OpenAI images
+### 6.6 OpenAI images
 
 ```bash
 curl http://127.0.0.1:8787/v1/images/generations \
@@ -269,7 +265,7 @@ curl http://127.0.0.1:8787/v1/images/generations \
 - `POST /v1/accounts/import`：导入账号数组
 - `PATCH /v1/accounts/:id`：更新 `enabled`/`name`
 - `DELETE /v1/accounts/:id`：删除账号
-- `POST /v1/models/import`：导入该账号已知模型清单（`[{id,name,apiName}]`）
+- `POST /v1/models/import`：导入全局模型映射（`[{id,name,apiName}]`）
 
 导入示例：
 
@@ -295,7 +291,7 @@ curl http://127.0.0.1:8787/v1/images/generations \
 2. 输入 `PROXY_API_KEY`（默认示例是 `test-key`）
 3. 粘贴导出的账号 JSON
 4. 点击导入，查看账号池状态与轮询信息
-5. 在 “Import Known Models” 区域粘贴模型 JSON 并导入
+5. 在 “Import Known Models” 区域粘贴你自己抓取的模型映射 JSON（`id/name/apiName`）并导入
 6. 在 “Image Studio” 区域配置 `model / size / quality / style / n / response_format` 并点击 `Generate Image`
 
 ---

@@ -3,12 +3,37 @@ import crypto from "node:crypto";
 import { config as loadEnv } from "dotenv";
 import path from "node:path";
 import fs from "node:fs";
-import { fileURLToPath } from "node:url";
+
+function hasServerMarkers(dir: string) {
+  return fs.existsSync(path.join(dir, "src")) && fs.existsSync(path.join(dir, "package.json"));
+}
+
+function resolveServerDir() {
+  let cur = path.resolve(process.cwd());
+  while (true) {
+    const nested = path.join(cur, "apps", "server");
+    if (hasServerMarkers(nested)) return nested;
+    if (hasServerMarkers(cur) && path.basename(cur) === "server" && path.basename(path.dirname(cur)) === "apps") return cur;
+    const parent = path.dirname(cur);
+    if (parent === cur) break;
+    cur = parent;
+  }
+  return path.resolve(process.cwd(), "apps", "server");
+}
+
+const SERVER_DIR = resolveServerDir();
+
+function resolveServerPath(raw: string | undefined, fallbackName: string) {
+  const v = (raw || "").trim();
+  if (!v) return path.resolve(SERVER_DIR, fallbackName);
+  if (path.isAbsolute(v)) return v;
+  return path.resolve(SERVER_DIR, v);
+}
 
 const envCandidates = [
   path.resolve(process.cwd(), ".env"),
+  path.resolve(SERVER_DIR, ".env"),
   path.resolve(process.cwd(), "apps/server/.env"),
-  path.resolve(process.cwd(), "../.env"),
 ];
 let loadedEnvPath = "";
 for (const p of envCandidates) {
@@ -42,10 +67,8 @@ const DEFAULT_MAGAI_IMAGE_PRESET = process.env.MAGAI_IMAGE_PRESET || "v2";
 const DEFAULT_MAGAI_IMAGE_MODEL_NAME = process.env.MAGAI_IMAGE_MODEL_NAME || "Nano Banana";
 const DEFAULT_MAGAI_IMAGE_RESOLUTION = process.env.MAGAI_IMAGE_RESOLUTION || "1K";
 const DEFAULT_MAGAI_CHAT_SNAPSHOT_ACTION = process.env.MAGAI_CHAT_SNAPSHOT_ACTION || "40a34afcf0167f40f2afa1b3ff5a65dc8451eac3a6";
-const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
-const SERVER_DIR = path.resolve(SCRIPT_DIR, "..");
-const ACCOUNTS_FILE = process.env.MAGAI_ACCOUNTS_FILE || path.resolve(SERVER_DIR, "accounts.json");
-const MODEL_CATALOG_FILE = process.env.MAGAI_MODEL_CATALOG_FILE || path.resolve(SERVER_DIR, "model-catalog.json");
+const ACCOUNTS_FILE = resolveServerPath(process.env.MAGAI_ACCOUNTS_FILE, "accounts.json");
+const MODEL_CATALOG_FILE = resolveServerPath(process.env.MAGAI_MODEL_CATALOG_FILE, "model-catalog.json");
 const FALLBACK_ROUTER_STATE_TREE = `["",{"children":[["path","chat","oc",null],{"children":["__PAGE__",{},null,null,0]},null,null,0]},null,null,16]`;
 
 const startAt = Date.now();
@@ -1051,3 +1074,6 @@ bootstrapAccounts();
 bootstrapModelCatalog();
 startHeartbeat();
 app.listen(PORT, HOST, () => console.log(`magai proxy listening on ${HOST}:${PORT}; accounts=${accounts.length}; accountsFile=${ACCOUNTS_FILE}; modelCatalogFile=${MODEL_CATALOG_FILE}; env=${loadedEnvPath || "none"}`));
+
+
+

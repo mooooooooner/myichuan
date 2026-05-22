@@ -212,7 +212,11 @@ Section "5/6  Seed default model catalog"
 
 $modelCatalogFile = $envMap["MAGAI_MODEL_CATALOG_FILE"]
 if (-not $modelCatalogFile) { $modelCatalogFile = "model-catalog.json" }
-$modelCatalogPath = Join-Path $repoRoot $modelCatalogFile
+if ([System.IO.Path]::IsPathRooted($modelCatalogFile)) {
+    $modelCatalogPath = $modelCatalogFile
+} else {
+    $modelCatalogPath = Join-Path (Join-Path $repoRoot "apps\\server") $modelCatalogFile
+}
 
 $hasAccounts = $false
 if (Test-Path $accountsFile) {

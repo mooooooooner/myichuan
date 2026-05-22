@@ -213,6 +213,15 @@ fi
 section "5/6  Seed default model catalog"
 
 if [[ -f "$ACCOUNTS_FILE" ]]; then
+    MODEL_CATALOG_FILE_CFG="$(get_env MAGAI_MODEL_CATALOG_FILE)"
+    if [[ -z "$MODEL_CATALOG_FILE_CFG" ]]; then
+        MODEL_CATALOG_FILE_CFG="model-catalog.json"
+    fi
+    if [[ "$MODEL_CATALOG_FILE_CFG" != /* ]]; then
+        MODEL_CATALOG_FILE_PATH="apps/server/$MODEL_CATALOG_FILE_CFG"
+    else
+        MODEL_CATALOG_FILE_PATH="$MODEL_CATALOG_FILE_CFG"
+    fi
     NEED_SEED=$(node -e "
         const fs=require('fs');
         const accountsFile=process.argv[1];
@@ -234,7 +243,7 @@ if [[ -f "$ACCOUNTS_FILE" ]]; then
             }
             process.stdout.write('seed');
         } catch { process.stdout.write('skip'); }
-    " "$ACCOUNTS_FILE" "$(get_env MAGAI_MODEL_CATALOG_FILE)")
+    " "$ACCOUNTS_FILE" "$MODEL_CATALOG_FILE_PATH")
     case "$NEED_SEED" in
         seed)
             node -e "
@@ -246,7 +255,7 @@ if [[ -f "$ACCOUNTS_FILE" ]]; then
                 const tmp = file + '.tmp.' + process.pid + '.' + Date.now();
                 fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
                 fs.renameSync(tmp, file);
-            " "$(get_env MAGAI_MODEL_CATALOG_FILE)"
+            " "$MODEL_CATALOG_FILE_PATH"
             green "Seeded Claude Sonnet 4.6 into model catalog file" ;;
         ok)   green "Model catalog already configured" ;;
         skip) yellow "No accounts present; skipping model seed" ;;
