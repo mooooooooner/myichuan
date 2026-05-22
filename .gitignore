@@ -3,6 +3,7 @@ apps/*/node_modules/
 dist/
 .env
 .env.*
+!apps/server/.env.example
 apps/server/.env
 apps/server/accounts.json
 apps/server/registered.json
