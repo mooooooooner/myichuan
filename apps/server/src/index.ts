@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response } from "express";
+﻿import express, { NextFunction, Request, Response } from "express";
 import crypto from "node:crypto";
 import { config as loadEnv } from "dotenv";
 import path from "node:path";
@@ -23,6 +23,7 @@ const app = express();
 app.use(express.json({ limit: "50mb" }));
 
 const PORT = Number(process.env.PORT || 8787);
+const HOST = (process.env.HOST || "127.0.0.1").trim();
 const PROXY_API_KEY = process.env.PROXY_API_KEY || "";
 const DEFAULT_MAGAI_BASE_URL = process.env.MAGAI_BASE_URL || "https://beta.magai.co";
 const DEFAULT_MAGAI_COOKIE = process.env.MAGAI_COOKIE || "";
@@ -981,4 +982,4 @@ function startHeartbeat() {
 
 bootstrapAccounts();
 startHeartbeat();
-app.listen(PORT, () => console.log(`magai proxy listening on :${PORT}; accounts=${accounts.length}; file=${ACCOUNTS_FILE}; env=${loadedEnvPath || "none"}`));
+app.listen(PORT, HOST, () => console.log(`magai proxy listening on ${HOST}:${PORT}; accounts=${accounts.length}; file=${ACCOUNTS_FILE}; env=${loadedEnvPath || "none"}`));

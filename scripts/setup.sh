@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # One-click setup for the Magai Proxy stack on macOS / Linux.
 # Run from the repository root after `git clone`:
 #   bash scripts/setup.sh
@@ -6,6 +6,7 @@
 # Flags (all optional):
 #   --register-count N   Skip the prompt and register N accounts
 #   --port P             Override server port (default 8787)
+#   --host H             Override server listen host (default 127.0.0.1)
 #   --proxy-key KEY      Pre-set PROXY_API_KEY
 #   --skip-register      Don't register any new accounts
 #   --no-start           Don't launch dev servers at the end
@@ -15,6 +16,7 @@ cd "$(dirname "$0")/.."
 
 REGISTER_COUNT=-1
 PORT=8787
+HOST="127.0.0.1"
 PROXY_KEY=""
 SKIP_REGISTER=0
 NO_START=0
@@ -23,6 +25,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --register-count) REGISTER_COUNT="${2:-0}"; shift 2 ;;
         --port)           PORT="${2:-8787}";        shift 2 ;;
+        --host)           HOST="${2:-127.0.0.1}";   shift 2 ;;
         --proxy-key)      PROXY_KEY="${2:-}";        shift 2 ;;
         --skip-register)  SKIP_REGISTER=1;           shift   ;;
         --no-start)       NO_START=1;                shift   ;;
@@ -74,10 +77,29 @@ section "2/6  Configure server .env"
 ENV_FILE="apps/server/.env"
 ENV_EXAMPLE="apps/server/.env.example"
 
+DEFAULT_ENV_TEMPLATE="$(cat <<'EOF'
+# Auto-generated fallback template by scripts/setup.sh
+PROXY_API_KEY=change-me
+PORT=8787
+HOST=127.0.0.1
+MAGAI_BASE_URL=https://beta.magai.co
+SUPABASE_URL=https://bkatrpghmzbpjhegvkev.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
+MAGAI_NEXT_ACTION=40cd8b2ec4704e0f3c267bd98f93b0f9806e121b77
+MAGAI_CHAT_SNAPSHOT_ACTION=40a34afcf0167f40f2afa1b3ff5a65dc8451eac3a6
+MAGAI_ALWAYS_NEW_CHAT=1
+MAGAI_ACCOUNTS_FILE=apps/server/accounts.json
+EOF
+)"
+
 if [[ -f "$ENV_FILE" ]]; then
     green "Found existing apps/server/.env (kept as-is)"
 else
-    [[ -f "$ENV_EXAMPLE" ]] || fail "$ENV_EXAMPLE missing; corrupt repo?"
+    if [[ ! -f "$ENV_EXAMPLE" ]]; then
+        yellow "$ENV_EXAMPLE missing; generating fallback template"
+        printf "%s\n" "$DEFAULT_ENV_TEMPLATE" > "$ENV_EXAMPLE"
+        green "Generated apps/server/.env.example fallback"
+    fi
     cp "$ENV_EXAMPLE" "$ENV_FILE"
     green "Created apps/server/.env from .env.example"
 fi
@@ -127,6 +149,8 @@ fi
 
 [[ -z "$(get_env PORT)" ]] && set_env PORT "$PORT"
 green "Server PORT = $(get_env PORT)"
+[[ -z "$(get_env HOST)" ]] && set_env HOST "$HOST"
+green "Server HOST = $(get_env HOST)"
 
 # Defaults for required upstream constants (only fill if blank).
 [[ -z "$(get_env MAGAI_BASE_URL)" ]]            && set_env MAGAI_BASE_URL "https://beta.magai.co"
@@ -191,7 +215,10 @@ if [[ -f "$ACCOUNTS_FILE" ]]; then
         const fs=require('fs');
         try {
             const a=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
-            if (!Array.isArray(a)||a.length===0) return process.stdout.write('skip');
+            if (!Array.isArray(a)||a.length===0) {
+                process.stdout.write('skip');
+                process.exit(0);
+            }
             const ok = a.every(x => x.magaiModelCatalogJson || x.magaiDefaultModelId);
             process.stdout.write(ok ? 'ok' : 'seed');
         } catch { process.stdout.write('skip'); }
@@ -218,21 +245,22 @@ fi
 section "6/6  Summary"
 
 FINAL_PORT="$(get_env PORT)"
+FINAL_HOST="$(get_env HOST)"
 FINAL_KEY="$(get_env PROXY_API_KEY)"
 FINAL_COUNT=0
 if [[ -f "$ACCOUNTS_FILE" ]]; then
     FINAL_COUNT=$(node -e "try{console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).length||0)}catch{console.log(0)}" "$ACCOUNTS_FILE")
 fi
 
-echo "  Server URL  : http://127.0.0.1:$FINAL_PORT"
+echo "  Server URL  : http://$FINAL_HOST:$FINAL_PORT"
 echo "  Portal URL  : http://127.0.0.1:5174"
 echo "  PROXY_API_KEY (use this as Bearer token):"
 printf "\033[33m    %s\033[0m\n" "$FINAL_KEY"
 echo "  Accounts on disk: $FINAL_COUNT"
 echo
 echo "  Quick test (after the server starts):"
-echo "    curl http://127.0.0.1:$FINAL_PORT/health"
-echo "    curl http://127.0.0.1:$FINAL_PORT/v1/models -H \"Authorization: Bearer $FINAL_KEY\""
+echo "    curl http://$FINAL_HOST:$FINAL_PORT/health"
+echo "    curl http://$FINAL_HOST:$FINAL_PORT/v1/models -H \"Authorization: Bearer $FINAL_KEY\""
 echo
 
 if [[ "$NO_START" == "1" ]]; then

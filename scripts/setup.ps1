@@ -1,4 +1,4 @@
-# One-click setup for the Magai Proxy stack on Windows.
+﻿# One-click setup for the Magai Proxy stack on Windows.
 # Designed for users who do not read code: prints what it is doing, asks the
 # minimum questions needed, never silently overwrites secrets.
 #
@@ -9,6 +9,7 @@
 param(
     [int]$RegisterCount = -1,         # -1 means "ask interactively"
     [int]$Port = 8787,
+    [string]$ListenHost = "127.0.0.1",
     [string]$ProxyApiKey = "",        # empty means "generate or ask"
     [switch]$NoStart,                  # skip launching dev servers at the end
     [switch]$SkipRegister              # skip auto-registering accounts
@@ -66,10 +67,28 @@ $envPath     = Join-Path $repoRoot "apps\server\.env"
 $envExample  = Join-Path $repoRoot "apps\server\.env.example"
 $envExisted  = Test-Path $envPath
 
+$defaultEnvTemplate = @(
+    "# Auto-generated fallback template by scripts/setup.ps1",
+    "PROXY_API_KEY=change-me",
+    "PORT=8787",
+    "HOST=127.0.0.1",
+    "MAGAI_BASE_URL=https://beta.magai.co",
+    "SUPABASE_URL=https://bkatrpghmzbpjhegvkev.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx",
+    "MAGAI_NEXT_ACTION=40cd8b2ec4704e0f3c267bd98f93b0f9806e121b77",
+    "MAGAI_CHAT_SNAPSHOT_ACTION=40a34afcf0167f40f2afa1b3ff5a65dc8451eac3a6",
+    "MAGAI_ALWAYS_NEW_CHAT=1",
+    "MAGAI_ACCOUNTS_FILE=apps/server/accounts.json"
+)
+
 if ($envExisted) {
     Ok "Found existing apps\server\.env (kept as-is)"
 } else {
-    if (-not (Test-Path $envExample)) { Fail "apps\server\.env.example missing; corrupt repo?" }
+    if (-not (Test-Path $envExample)) {
+        Warn "apps\server\.env.example missing; generating fallback template"
+        [System.IO.File]::WriteAllLines($envExample, $defaultEnvTemplate, [System.Text.UTF8Encoding]::new($false))
+        Ok "Generated apps\server\.env.example fallback"
+    }
     Copy-Item $envExample $envPath
     Ok "Created apps\server\.env from .env.example"
 }
@@ -122,7 +141,11 @@ if (-not $currentKey -or $currentKey -eq "change-me" -or $currentKey -eq "") {
 if (-not $envMap["PORT"]) { $envMap["PORT"] = "$Port" }
 Ok ("Server PORT = " + $envMap["PORT"])
 
-# Required Magai/Supabase upstream constants — fill defaults if missing.
+# HOST (listen address)
+if (-not $envMap["HOST"]) { $envMap["HOST"] = "$ListenHost" }
+Ok ("Server HOST = " + $envMap["HOST"])
+
+# Required Magai/Supabase upstream constants 鈥?fill defaults if missing.
 if (-not $envMap["MAGAI_BASE_URL"])           { $envMap["MAGAI_BASE_URL"] = "https://beta.magai.co" }
 if (-not $envMap["SUPABASE_URL"])             { $envMap["SUPABASE_URL"]   = "https://bkatrpghmzbpjhegvkev.supabase.co" }
 if (-not $envMap["SUPABASE_PUBLISHABLE_KEY"] -or $envMap["SUPABASE_PUBLISHABLE_KEY"] -eq "sb_publishable_xxx") {
@@ -213,15 +236,15 @@ if (-not $accountsExist) { Warn "No accounts present; skipping model seed" }
 # ---------- summary + start ----------
 Section "6/6  Summary"
 
-Write-Host "  Server URL  : http://127.0.0.1:$($envMap['PORT'])"
+Write-Host "  Server URL  : http://$($envMap['HOST']):$($envMap['PORT'])"
 Write-Host "  Portal URL  : http://127.0.0.1:5174"
 Write-Host "  PROXY_API_KEY (use this as Bearer token):"
 Write-Host ("    " + $envMap["PROXY_API_KEY"]) -ForegroundColor Yellow
 Write-Host "  Accounts on disk: $((@(if (Test-Path $accountsFile) { Get-Content -Raw $accountsFile | ConvertFrom-Json } else { @() })).Count)"
 Write-Host ""
 Write-Host "  Quick test (after the server starts):"
-Write-Host "    curl http://127.0.0.1:$($envMap['PORT'])/health"
-Write-Host "    curl http://127.0.0.1:$($envMap['PORT'])/v1/models -H ""Authorization: Bearer $($envMap['PROXY_API_KEY'])"""
+Write-Host "    curl http://$($envMap['HOST']):$($envMap['PORT'])/health"
+Write-Host "    curl http://$($envMap['HOST']):$($envMap['PORT'])/v1/models -H ""Authorization: Bearer $($envMap['PROXY_API_KEY'])"""
 Write-Host ""
 
 if ($NoStart) {
