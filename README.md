@@ -126,7 +126,8 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
 SUPABASE_REFRESH_TOKEN=<latest>
 
 # multi-account persistence
-MAGAI_ACCOUNTS_FILE=apps/server/accounts.json
+MAGAI_ACCOUNTS_FILE=accounts.json
+MAGAI_MODEL_CATALOG_FILE=model-catalog.json
 
 # optional fallback
 MAGAI_DEFAULT_CHAT_ID=

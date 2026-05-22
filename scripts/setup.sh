@@ -88,8 +88,8 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
 MAGAI_NEXT_ACTION=40cd8b2ec4704e0f3c267bd98f93b0f9806e121b77
 MAGAI_CHAT_SNAPSHOT_ACTION=40a34afcf0167f40f2afa1b3ff5a65dc8451eac3a6
 MAGAI_ALWAYS_NEW_CHAT=1
-MAGAI_ACCOUNTS_FILE=apps/server/accounts.json
-MAGAI_MODEL_CATALOG_FILE=apps/server/model-catalog.json
+MAGAI_ACCOUNTS_FILE=accounts.json
+MAGAI_MODEL_CATALOG_FILE=model-catalog.json
 EOF
 )"
 
@@ -163,8 +163,8 @@ fi
 [[ -z "$(get_env MAGAI_NEXT_ACTION)" ]]          && set_env MAGAI_NEXT_ACTION "40cd8b2ec4704e0f3c267bd98f93b0f9806e121b77"
 [[ -z "$(get_env MAGAI_CHAT_SNAPSHOT_ACTION)" ]] && set_env MAGAI_CHAT_SNAPSHOT_ACTION "40a34afcf0167f40f2afa1b3ff5a65dc8451eac3a6"
 [[ -z "$(get_env MAGAI_ALWAYS_NEW_CHAT)" ]]      && set_env MAGAI_ALWAYS_NEW_CHAT "1"
-[[ -z "$(get_env MAGAI_ACCOUNTS_FILE)" ]]        && set_env MAGAI_ACCOUNTS_FILE "apps/server/accounts.json"
-[[ -z "$(get_env MAGAI_MODEL_CATALOG_FILE)" ]]   && set_env MAGAI_MODEL_CATALOG_FILE "apps/server/model-catalog.json"
+[[ -z "$(get_env MAGAI_ACCOUNTS_FILE)" ]]        && set_env MAGAI_ACCOUNTS_FILE "accounts.json"
+[[ -z "$(get_env MAGAI_MODEL_CATALOG_FILE)" ]]   && set_env MAGAI_MODEL_CATALOG_FILE "model-catalog.json"
 
 green "Wrote apps/server/.env"
 

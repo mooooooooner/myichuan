@@ -78,8 +78,8 @@ $defaultEnvTemplate = @(
     "MAGAI_NEXT_ACTION=40cd8b2ec4704e0f3c267bd98f93b0f9806e121b77",
     "MAGAI_CHAT_SNAPSHOT_ACTION=40a34afcf0167f40f2afa1b3ff5a65dc8451eac3a6",
     "MAGAI_ALWAYS_NEW_CHAT=1",
-    "MAGAI_ACCOUNTS_FILE=apps/server/accounts.json",
-    "MAGAI_MODEL_CATALOG_FILE=apps/server/model-catalog.json"
+    "MAGAI_ACCOUNTS_FILE=accounts.json",
+    "MAGAI_MODEL_CATALOG_FILE=model-catalog.json"
 )
 
 if ($envExisted) {
@@ -155,8 +155,8 @@ if (-not $envMap["SUPABASE_PUBLISHABLE_KEY"] -or $envMap["SUPABASE_PUBLISHABLE_K
 if (-not $envMap["MAGAI_NEXT_ACTION"])         { $envMap["MAGAI_NEXT_ACTION"] = "40cd8b2ec4704e0f3c267bd98f93b0f9806e121b77" }
 if (-not $envMap["MAGAI_CHAT_SNAPSHOT_ACTION"]){ $envMap["MAGAI_CHAT_SNAPSHOT_ACTION"] = "40a34afcf0167f40f2afa1b3ff5a65dc8451eac3a6" }
 if (-not $envMap["MAGAI_ALWAYS_NEW_CHAT"])     { $envMap["MAGAI_ALWAYS_NEW_CHAT"] = "1" }
-if (-not $envMap["MAGAI_ACCOUNTS_FILE"])       { $envMap["MAGAI_ACCOUNTS_FILE"] = "apps/server/accounts.json" }
-if (-not $envMap["MAGAI_MODEL_CATALOG_FILE"])  { $envMap["MAGAI_MODEL_CATALOG_FILE"] = "apps/server/model-catalog.json" }
+if (-not $envMap["MAGAI_ACCOUNTS_FILE"])       { $envMap["MAGAI_ACCOUNTS_FILE"] = "accounts.json" }
+if (-not $envMap["MAGAI_MODEL_CATALOG_FILE"])  { $envMap["MAGAI_MODEL_CATALOG_FILE"] = "model-catalog.json" }
 
 Write-EnvFile $envPath $envMap
 Ok "Wrote apps\server\.env"
@@ -211,7 +211,7 @@ if (Test-Path (Join-Path $repoRoot "apps\server\registered.json")) {
 Section "5/6  Seed default model catalog"
 
 $modelCatalogFile = $envMap["MAGAI_MODEL_CATALOG_FILE"]
-if (-not $modelCatalogFile) { $modelCatalogFile = "apps/server/model-catalog.json" }
+if (-not $modelCatalogFile) { $modelCatalogFile = "model-catalog.json" }
 $modelCatalogPath = Join-Path $repoRoot $modelCatalogFile
 
 $hasAccounts = $false
